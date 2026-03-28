@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: calendar_db
+    environment:
+      POSTGRES_USER: devuser
+      POSTGRES_PASSWORD: devpassword
+      POSTGRES_DB: calendar_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  dev-environment:
+    image: node:20-alpine
+    container_name: calendar_dev
+    working_dir: /app
+    ports:
+      - "3000:3000"
+      - "3001:3001"
+      - "5555:5555"
+    volumes:
+      - .:/app
+    command: sh -c "apk add --no-cache openssl && corepack enable && corepack install --global pnpm@9.1.0 && pnpm install && pnpm prisma generate --schema=./packages/database/prisma/schema.prisma && pnpm run dev"
+    environment:
+      - DATABASE_URL=postgresql://devuser:devpassword@db:5432/calendar_db?schema=public
+      - NODE_ENV=development
+    env_file:
+      - .env
+    depends_on:
+      - db
+    restart: unless-stopped
+
+volumes:
+  pgdata:
