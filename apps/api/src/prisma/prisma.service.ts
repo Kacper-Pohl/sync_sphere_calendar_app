@@ -1,3 +1,3 @@
 import { PrismaClient } from 'database';
 
-export abstract class PrismaService extends PrismaClient {}
+export abstract class PrismaService extends PrismaClient { }

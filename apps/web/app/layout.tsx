@@ -1,7 +1,7 @@
 import { Outfit } from 'next/font/google';
 import './globals.css';
 
-const outfit = Outfit({ 
+const outfit = Outfit({
   subsets: ['latin'],
   display: 'swap',
   variable: '--font-outfit',
@@ -15,14 +15,10 @@ export const metadata = {
 
 import { Toaster } from '@/components/ui/sonner';
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="pl" className="dark">
-      <body className={`${outfit.variable} font-sans antialiased text-slate-200`}>
+      <body className={`${outfit.variable} font-sans text-slate-200 antialiased`}>
         {children}
         <Toaster />
       </body>

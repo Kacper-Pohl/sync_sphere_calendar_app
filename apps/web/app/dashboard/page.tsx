@@ -15,7 +15,7 @@ function DashboardContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const urlToken = searchParams.get('token');
-  
+
   useEffect(() => {
     if (urlToken) {
       localStorage.setItem('jwt_token', urlToken);
@@ -23,55 +23,59 @@ function DashboardContent() {
     }
   }, [urlToken, router]);
 
-  const { data, error, isLoading } = useSWR<EventsResponse>(
-    `${API_URL}/calendar/events`,
-    fetcher,
-    {
-      revalidateOnFocus: true,
-      dedupingInterval: 5000,
-    }
-  );
+  const { data, error, isLoading } = useSWR<EventsResponse>(`${API_URL}/calendar/events`, fetcher, {
+    revalidateOnFocus: true,
+    dedupingInterval: 5000,
+  });
 
   const events = useMemo(() => data?.events || [], [data]);
 
-  if (isLoading) return (
-    <div className="flex h-screen flex-col items-center justify-center space-y-4">
-      <div className="h-8 w-8 animate-spin rounded-full border-t-2 border-emerald-500"></div>
-      <p className="text-xs tracking-widest uppercase text-slate-500 animate-pulse">Synchronizacja...</p>
-    </div>
-  );
+  if (isLoading)
+    return (
+      <div className="flex h-screen flex-col items-center justify-center space-y-4">
+        <div className="h-8 w-8 animate-spin rounded-full border-t-2 border-emerald-500"></div>
+        <p className="animate-pulse text-xs uppercase tracking-widest text-slate-500">
+          Synchronizacja...
+        </p>
+      </div>
+    );
 
-  if (error) return (
-    <div className="flex h-screen flex-col items-center justify-center p-6 text-center">
-      <p className="text-sm font-medium text-slate-300">Nie udało się połączyć z orbitą danych.</p>
-      <button 
-        onClick={() => router.push('/')}
-        className="mt-6 px-4 py-2 text-xs border border-white/10 rounded-full hover:bg-white/5 transition-colors"
-      >
-        Powrót
-      </button>
-    </div>
-  );
+  if (error)
+    return (
+      <div className="flex h-screen flex-col items-center justify-center p-6 text-center">
+        <p className="text-sm font-medium text-slate-300">
+          Nie udało się połączyć z orbitą danych.
+        </p>
+        <button
+          onClick={() => router.push('/')}
+          className="mt-6 rounded-full border border-white/10 px-4 py-2 text-xs transition-colors hover:bg-white/5"
+        >
+          Powrót
+        </button>
+      </div>
+    );
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-12 md:py-20">
-      <motion.div 
+    <div className="mx-auto max-w-7xl px-6 py-12 md:py-20">
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, ease: "easeOut" }}
+        transition={{ duration: 0.8, ease: 'easeOut' }}
         className="mb-16"
       >
-        <h2 className="text-4xl font-bold tracking-tight mb-2">Twój Czas</h2>
-        <p className="text-slate-400 font-light">Minimalistyczny wgląd w Twoje nadchodzące wydarzenia.</p>
+        <h2 className="mb-2 text-4xl font-bold tracking-tight">Twój Czas</h2>
+        <p className="font-light text-slate-400">
+          Minimalistyczny wgląd w Twoje nadchodzące wydarzenia.
+        </p>
       </motion.div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
         <AnimatePresence mode="popLayout">
           {events.length === 0 ? (
-            <motion.p 
+            <motion.p
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="text-slate-500 font-light italic col-span-full"
+              className="col-span-full font-light italic text-slate-500"
             >
               Cisza w kalendarzu. Ciesz się wolną chwilą.
             </motion.p>
@@ -86,26 +90,31 @@ function DashboardContent() {
                 className="minimal-card"
               >
                 <div className="mb-4">
-                  <div className="text-[10px] uppercase tracking-[0.2em] text-emerald-500 font-bold mb-1">
+                  <div className="mb-1 text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-500">
                     Sierpień
                   </div>
-                  <h3 className="text-lg font-semibold text-slate-100 group-hover:text-white transition-colors">
+                  <h3 className="text-lg font-semibold text-slate-100 transition-colors group-hover:text-white">
                     {event.summary || 'Bez Tytułu'}
                   </h3>
                 </div>
-                
+
                 <div className="flex items-center gap-2 text-xs text-slate-400">
-                  <Clock className="w-3 h-3" />
+                  <Clock className="h-3 w-3" />
                   <span>
-                    {new Date(event.start?.dateTime || event.start?.date || '').toLocaleString('pl-PL', {
-                      day: 'numeric', hour: '2-digit', minute: '2-digit'
-                    })}
+                    {new Date(event.start?.dateTime || event.start?.date || '').toLocaleString(
+                      'pl-PL',
+                      {
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      },
+                    )}
                   </span>
                 </div>
 
                 {event.description && (
-                  <div className="mt-4 pt-4 border-t border-white/[0.03]">
-                    <p className="text-xs text-slate-500 leading-relaxed line-clamp-2">
+                  <div className="mt-4 border-t border-white/[0.03] pt-4">
+                    <p className="line-clamp-2 text-xs leading-relaxed text-slate-500">
                       {event.description}
                     </p>
                   </div>
@@ -121,11 +130,13 @@ function DashboardContent() {
 
 export default function DashboardPage() {
   return (
-    <Suspense fallback={
-      <div className="flex h-screen items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-t-2 border-slate-700"></div>
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="flex h-screen items-center justify-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-t-2 border-slate-700"></div>
+        </div>
+      }
+    >
       <DashboardContent />
     </Suspense>
   );

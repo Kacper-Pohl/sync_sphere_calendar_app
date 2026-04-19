@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { AuthService } from './auth.service';
 import { GoogleOAuthGuard } from './guards/google-oauth.guard';
 import * as express from 'express';
+import { RequestWithUser } from '../common/types';
 
 @Controller('auth')
 export class AuthController {
@@ -13,16 +14,21 @@ export class AuthController {
 
   @Get('google')
   @UseGuards(GoogleOAuthGuard)
-  async googleAuth(@Req() _req: any) {
+  async googleAuth() {
     // Rozpoczyna proces logowania Google
   }
 
   @Get('google/callback')
   @UseGuards(GoogleOAuthGuard)
-  async googleAuthRedirect(@Req() req: any, @Res() res: express.Response) {
-    const frontendUrl = this.configService.get<string>('FRONTEND_URL', 'http://localhost:3000');
-    const token = await this.authService.login(req.user);
+  googleAuthRedirect(
+    @Req() req: RequestWithUser,
+    @Res() res: express.Response,
+  ) {
+    const frontendUrl = this.configService.get<string>(
+      'FRONTEND_URL',
+      'http://localhost:3000',
+    );
+    const token = this.authService.login(req.user);
     return res.redirect(`${frontendUrl}/dashboard?token=${token}`);
   }
 }
-

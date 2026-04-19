@@ -8,4 +8,4 @@ import { PrismaModule } from '../prisma/prisma.module';
   controllers: [CalendarController],
   providers: [CalendarService],
 })
-export class CalendarModule {}
+export class CalendarModule { }

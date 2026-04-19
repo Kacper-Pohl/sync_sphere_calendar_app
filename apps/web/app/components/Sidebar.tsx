@@ -23,7 +23,7 @@ export function Sidebar() {
   return (
     <div className="flex h-screen w-64 flex-col border-r bg-card/60 backdrop-blur-xl">
       <div className="flex h-16 shrink-0 items-center justify-center border-b">
-        <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-emerald-400">
+        <h1 className="bg-gradient-to-r from-primary to-emerald-400 bg-clip-text text-xl font-bold text-transparent">
           SyncSphere
         </h1>
       </div>
@@ -34,7 +34,10 @@ export function Sidebar() {
             <Link key={item.name} href={item.href}>
               <Button
                 variant={isActive ? 'default' : 'ghost'}
-                className={cn('w-full justify-start gap-3', isActive && 'shadow-md shadow-primary/20')}
+                className={cn(
+                  'w-full justify-start gap-3',
+                  isActive && 'shadow-md shadow-primary/20',
+                )}
               >
                 <item.icon className="h-5 w-5" />
                 {item.name}
@@ -43,8 +46,12 @@ export function Sidebar() {
           );
         })}
       </nav>
-      <div className="p-4 border-t">
-        <Button variant="ghost" className="w-full justify-start gap-3 text-muted-foreground hover:text-destructive" onClick={handleLogout}>
+      <div className="border-t p-4">
+        <Button
+          variant="ghost"
+          className="w-full justify-start gap-3 text-muted-foreground hover:text-destructive"
+          onClick={handleLogout}
+        >
           <LogOut className="h-5 w-5" />
           Wyloguj
         </Button>

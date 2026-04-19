@@ -2,6 +2,7 @@ import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
 import { OAuthProfileDto } from './dto/auth.dto';
+import { AuthenticatedUser } from '../common/types';
 
 @Injectable()
 export class AuthService {
@@ -10,7 +11,9 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
-  async validateOAuthLogin(profile: OAuthProfileDto): Promise<any> {
+  async validateOAuthLogin(
+    profile: OAuthProfileDto,
+  ): Promise<AuthenticatedUser> {
     try {
       const user = await this.prisma.user.upsert({
         where: { email: profile.email },
@@ -30,13 +33,20 @@ export class AuthService {
           refreshToken: profile.refreshToken,
         },
       });
-      return user;
+      return {
+        id: user.id,
+        email: user.email,
+        name: user.name ?? undefined,
+      };
     } catch (err) {
-      throw new InternalServerErrorException(`Auth validate process failed: ${err.message}`);
+      const message = err instanceof Error ? err.message : String(err);
+      throw new InternalServerErrorException(
+        `Auth validate process failed: ${message}`,
+      );
     }
   }
 
-  async login(user: { email: string; id: string }) {
+  login(user: { email: string; id: string }) {
     const payload = { email: user.email, sub: user.id };
     return this.jwtService.sign(payload);
   }

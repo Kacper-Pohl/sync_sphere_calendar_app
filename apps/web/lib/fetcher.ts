@@ -1,6 +1,6 @@
 export const fetcher = async (url: string) => {
   const token = typeof window !== 'undefined' ? localStorage.getItem('jwt_token') : null;
-  
+
   const res = await fetch(url, {
     headers: {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),

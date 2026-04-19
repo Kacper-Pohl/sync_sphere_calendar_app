@@ -27,6 +27,8 @@ services:
       - "3001:3001"
     volumes:
       - .:/app
+      - api_node_modules:/app/node_modules
+      - api_app_node_modules:/app/apps/api/node_modules
     environment:
       - DATABASE_URL=postgresql://devuser:devpassword@db:5432/calendar_db?schema=public
       - NODE_ENV=development
@@ -39,6 +41,23 @@ services:
       db:
         condition: service_healthy
     restart: unless-stopped
+    develop:
+      watch:
+        # Synchronizuj kod źródłowy API bez przebudowywania kontenera
+        - action: sync
+          path: ./apps/api/src
+          target: /app/apps/api/src
+        # Synchronizuj paczki współdzielone
+        - action: sync
+          path: ./packages
+          target: /app/packages
+        # Przebuduj kontener gdy zmienią się zależności
+        - action: rebuild
+          path: ./apps/api/package.json
+        - action: rebuild
+          path: ./package.json
+        - action: rebuild
+          path: ./pnpm-lock.yaml
 
   web:
     build:
@@ -50,6 +69,8 @@ services:
       - "3000:3000"
     volumes:
       - .:/app
+      - web_node_modules:/app/node_modules
+      - web_app_node_modules:/app/apps/web/node_modules
     environment:
       - NEXT_PUBLIC_API_URL=http://localhost:3001
       - NODE_ENV=development
@@ -62,6 +83,36 @@ services:
       api:
         condition: service_started
     restart: unless-stopped
+    develop:
+      watch:
+        # Synchronizuj kod źródłowy Next.js bez przebudowywania kontenera
+        - action: sync
+          path: ./apps/web/app
+          target: /app/apps/web/app
+        - action: sync
+          path: ./apps/web/components
+          target: /app/apps/web/components
+        - action: sync
+          path: ./apps/web/lib
+          target: /app/apps/web/lib
+        - action: sync
+          path: ./apps/web/public
+          target: /app/apps/web/public
+        # Przebuduj gdy zmienią się zależności lub konfiguracja
+        - action: rebuild
+          path: ./apps/web/package.json
+        - action: rebuild
+          path: ./apps/web/tailwind.config.ts
+        - action: rebuild
+          path: ./apps/web/next.config.ts
+        - action: rebuild
+          path: ./package.json
+        - action: rebuild
+          path: ./pnpm-lock.yaml
 
 volumes:
   pgdata:
+  api_node_modules:
+  api_app_node_modules:
+  web_node_modules:
+  web_app_node_modules:

@@ -19,4 +19,4 @@ import { CalendarModule } from './calendar/calendar.module';
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }
