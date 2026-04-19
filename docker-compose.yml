@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   db:
     image: postgres:16-alpine
@@ -12,26 +10,57 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U devuser -d calendar_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     restart: unless-stopped
 
-  dev-environment:
-    image: node:20-alpine
-    container_name: calendar_dev
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: calendar_api
     working_dir: /app
     ports:
-      - "3000:3000"
       - "3001:3001"
-      - "5555:5555"
     volumes:
       - .:/app
-    command: sh -c "apk add --no-cache openssl && corepack enable && corepack install --global pnpm@9.1.0 && pnpm install && pnpm prisma generate --schema=./packages/database/prisma/schema.prisma && pnpm run dev"
     environment:
       - DATABASE_URL=postgresql://devuser:devpassword@db:5432/calendar_db?schema=public
       - NODE_ENV=development
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
     env_file:
       - .env
+    command: sh -c "pnpm prisma generate --schema=./packages/database/prisma/schema.prisma && pnpm run dev --filter api"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: calendar_web
+    working_dir: /app
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:3001
+      - NODE_ENV=development
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
+    env_file:
+      - .env
+    command: pnpm run dev --filter web
+    depends_on:
+      api:
+        condition: service_started
     restart: unless-stopped
 
 volumes:

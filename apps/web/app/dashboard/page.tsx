@@ -1,97 +1,132 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import useSWR from 'swr';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Clock } from 'lucide-react';
+import { fetcher } from '@/lib/fetcher';
+import { EventsResponse, CalendarEvent } from '@/lib/types/events';
+import { motion, AnimatePresence } from 'framer-motion';
 
-export default function DashboardPage() {
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+
+function DashboardContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [events, setEvents] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-
+  const urlToken = searchParams.get('token');
+  
   useEffect(() => {
-    const urlToken = searchParams.get('token');
     if (urlToken) {
       localStorage.setItem('jwt_token', urlToken);
-      router.replace('/dashboard'); // Wyczyść URL 
-      return; 
+      router.replace('/dashboard');
     }
+  }, [urlToken, router]);
 
-    const fetchEvents = async () => {
-      const token = localStorage.getItem('jwt_token');
-      if (!token) {
-        router.push('/');
-        return;
-      }
+  const { data, error, isLoading } = useSWR<EventsResponse>(
+    `${API_URL}/calendar/events`,
+    fetcher,
+    {
+      revalidateOnFocus: true,
+      dedupingInterval: 5000,
+    }
+  );
 
-      try {
-        const res = await fetch('http://localhost:3001/calendar/events', {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-        
-        if (!res.ok) throw new Error('Nie udało się pobrać wydarzeń.');
-        
-        const data = await res.json();
-        setEvents(data.events || []);
-      } catch (err: any) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const events = useMemo(() => data?.events || [], [data]);
 
-    fetchEvents();
-  }, [searchParams, router]);
+  if (isLoading) return (
+    <div className="flex h-screen flex-col items-center justify-center space-y-4">
+      <div className="h-8 w-8 animate-spin rounded-full border-t-2 border-emerald-500"></div>
+      <p className="text-xs tracking-widest uppercase text-slate-500 animate-pulse">Synchronizacja...</p>
+    </div>
+  );
 
-  if (loading) return (
-    <div className="container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '80vh' }}>
-      <div className="loader"></div>
-      <p style={{ opacity: 0.7 }}>Synchronizowanie sfery...</p>
+  if (error) return (
+    <div className="flex h-screen flex-col items-center justify-center p-6 text-center">
+      <p className="text-sm font-medium text-slate-300">Nie udało się połączyć z orbitą danych.</p>
+      <button 
+        onClick={() => router.push('/')}
+        className="mt-6 px-4 py-2 text-xs border border-white/10 rounded-full hover:bg-white/5 transition-colors"
+      >
+        Powrót
+      </button>
     </div>
   );
 
   return (
-    <main className="container">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-        <h2>Twoja <span style={{ color: '#a855f7' }}>Sfera Wydarzeń</span></h2>
-        <button className="btn-glass" style={{ margin: 0, padding: '0.5rem 1.5rem', fontSize: '0.9rem' }} onClick={() => {
-          localStorage.removeItem('jwt_token');
-          router.push('/');
-        }}>Sign Out</button>
-      </div>
+    <div className="max-w-7xl mx-auto px-6 py-12 md:py-20">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, ease: "easeOut" }}
+        className="mb-16"
+      >
+        <h2 className="text-4xl font-bold tracking-tight mb-2">Twój Czas</h2>
+        <p className="text-slate-400 font-light">Minimalistyczny wgląd w Twoje nadchodzące wydarzenia.</p>
+      </motion.div>
 
-      {error && <p style={{ color: '#ef4444' }}>{error}</p>}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <AnimatePresence mode="popLayout">
+          {events.length === 0 ? (
+            <motion.p 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-slate-500 font-light italic col-span-full"
+            >
+              Cisza w kalendarzu. Ciesz się wolną chwilą.
+            </motion.p>
+          ) : (
+            events.map((event: CalendarEvent, index: number) => (
+              <motion.div
+                key={event.id}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                whileHover={{ y: -4 }}
+                className="minimal-card"
+              >
+                <div className="mb-4">
+                  <div className="text-[10px] uppercase tracking-[0.2em] text-emerald-500 font-bold mb-1">
+                    Sierpień
+                  </div>
+                  <h3 className="text-lg font-semibold text-slate-100 group-hover:text-white transition-colors">
+                    {event.summary || 'Bez Tytułu'}
+                  </h3>
+                </div>
+                
+                <div className="flex items-center gap-2 text-xs text-slate-400">
+                  <Clock className="w-3 h-3" />
+                  <span>
+                    {new Date(event.start?.dateTime || event.start?.date || '').toLocaleString('pl-PL', {
+                      day: 'numeric', hour: '2-digit', minute: '2-digit'
+                    })}
+                  </span>
+                </div>
 
-      <div className="event-grid">
-        {events.length === 0 ? (
-          <p style={{ color: '#94a3b8' }}>Brak nadchodzących wydarzeń w Google Calendar.</p>
-        ) : (
-          events.map((event) => (
-            <div key={event.id} className="event-card">
-              <h3 className="event-title">{event.summary || 'Bez Tytułu'}</h3>
-              
-              <div className="event-time">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <circle cx="12" cy="12" r="10"/>
-                  <path d="M12 6v6l4 2"/>
-                </svg>
-                {new Date(event.start?.dateTime || event.start?.date).toLocaleString('pl-PL', {
-                  day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
-                })}
-              </div>
-              
-              {event.description && (
-                <p style={{ marginTop: '1rem', fontSize: '0.9rem', opacity: 0.8, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                  {event.description}
-                </p>
-              )}
-            </div>
-          ))
-        )}
+                {event.description && (
+                  <div className="mt-4 pt-4 border-t border-white/[0.03]">
+                    <p className="text-xs text-slate-500 leading-relaxed line-clamp-2">
+                      {event.description}
+                    </p>
+                  </div>
+                )}
+              </motion.div>
+            ))
+          )}
+        </AnimatePresence>
       </div>
-    </main>
+    </div>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex h-screen items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-t-2 border-slate-700"></div>
+      </div>
+    }>
+      <DashboardContent />
+    </Suspense>
   );
 }

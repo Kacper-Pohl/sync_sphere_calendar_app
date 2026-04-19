@@ -1,12 +1,16 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
+import { OAuthProfileDto } from './dto/auth.dto';
 
 @Injectable()
 export class AuthService {
-  constructor(private readonly prisma: PrismaService, private readonly jwtService: JwtService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly jwtService: JwtService,
+  ) {}
 
-  async validateOAuthLogin(profile: any): Promise<any> {
+  async validateOAuthLogin(profile: OAuthProfileDto): Promise<any> {
     try {
       const user = await this.prisma.user.upsert({
         where: { email: profile.email },
@@ -28,11 +32,11 @@ export class AuthService {
       });
       return user;
     } catch (err) {
-      throw new Error(`Auth validate process failed: ${err}`);
+      throw new InternalServerErrorException(`Auth validate process failed: ${err.message}`);
     }
   }
 
-  async login(user: any) {
+  async login(user: { email: string; id: string }) {
     const payload = { email: user.email, sub: user.id };
     return this.jwtService.sign(payload);
   }

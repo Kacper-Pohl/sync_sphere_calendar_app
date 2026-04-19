@@ -23,8 +23,11 @@
   "dependencies": {
     "database": "workspace:*",
     "@nestjs/common": "^11.0.1",
+    "@nestjs/config": "^4.0.0",
     "@nestjs/core": "^11.0.1",
     "@nestjs/jwt": "^11.0.0",
+    "class-validator": "^0.14.1",
+    "class-transformer": "^0.5.1",
     "@nestjs/passport": "^11.0.5",
     "@nestjs/platform-express": "^11.0.1",
     "googleapis": "^144.0.0",
