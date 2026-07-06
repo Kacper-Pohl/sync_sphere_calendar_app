@@ -10,7 +10,7 @@ alwaysApply: true
 ## Stack
 
 - **Monorepo:** Turborepo + pnpm workspaces
-- **Frontend:** Next.js 15 (App Router), Tailwind CSS v3, Shadcn UI, SWR, date-fns
+- **Frontend:** Next.js 16 (App Router), React 19, Tailwind CSS v3, Shadcn UI, SWR, date-fns
 - **Backend:** NestJS 11, Passport (Google OAuth + JWT)
 - **Database:** PostgreSQL 16, Prisma 7 (`packages/database`)
 - **Infra:** Docker Compose (dev), Node 20 Alpine images

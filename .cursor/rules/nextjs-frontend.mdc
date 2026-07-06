@@ -19,6 +19,11 @@ alwaysApply: false
 - API base URL from `NEXT_PUBLIC_API_URL` (set to `http://localhost:3001` in Docker).
 - Auth token passed via query param on OAuth redirect; store and attach to requests as established in existing code.
 
+## Linting
+
+- Next.js 16 uses ESLint flat config (`eslint.config.mjs`).
+- Run lint inside the `web` container: `docker compose exec web pnpm lint`.
+
 ## Styling
 
 - Tailwind CSS with CSS variables defined in `globals.css`.

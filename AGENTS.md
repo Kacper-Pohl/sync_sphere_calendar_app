@@ -43,7 +43,7 @@ NestJS and Next.js run in watch mode inside containers. Polling is enabled for W
 
 | Path                 | Purpose                    |
 | -------------------- | -------------------------- |
-| `apps/web/`          | Next.js 15 frontend        |
+| `apps/web/`          | Next.js 16 frontend        |
 | `apps/api/`          | NestJS backend             |
 | `packages/database/` | Prisma schema & client     |
 | `packages/tsconfig/` | Shared TS configs          |
@@ -83,4 +83,4 @@ Detailed guidance lives in:
 
 ## Stack
 
-Turborepo · pnpm · Next.js 15 · NestJS 11 · Prisma 7 · PostgreSQL 16 · Tailwind · Shadcn UI · Google OAuth
+Turborepo · pnpm · Next.js 16 · React 19 · NestJS 11 · Prisma 7 · PostgreSQL 16 · Tailwind · Shadcn UI · Google OAuth

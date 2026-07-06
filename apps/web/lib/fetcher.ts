@@ -1,3 +1,8 @@
+type FetchError = Error & {
+  info?: unknown;
+  status?: number;
+};
+
 export const fetcher = async (url: string) => {
   const token = typeof window !== 'undefined' ? localStorage.getItem('jwt_token') : null;
 
@@ -8,10 +13,8 @@ export const fetcher = async (url: string) => {
   });
 
   if (!res.ok) {
-    const error = new Error('An error occurred while fetching the data.');
-    // @ts-ignore
+    const error: FetchError = new Error('An error occurred while fetching the data.');
     error.info = await res.json();
-    // @ts-ignore
     error.status = res.status;
     throw error;
   }

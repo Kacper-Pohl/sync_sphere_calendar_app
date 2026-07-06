@@ -1,6 +1,6 @@
 'use client';
 
-import { Plus, Bell, Search } from 'lucide-react';
+import { Bell, Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { AddEventModal } from './AddEventModal';
 import { Button } from '@/components/ui/button';

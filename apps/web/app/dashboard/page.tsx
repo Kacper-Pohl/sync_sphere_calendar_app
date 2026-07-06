@@ -3,7 +3,6 @@
 import { useEffect, useMemo, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import useSWR from 'swr';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Clock } from 'lucide-react';
 import { fetcher } from '@/lib/fetcher';
 import { EventsResponse, CalendarEvent } from '@/lib/types/events';

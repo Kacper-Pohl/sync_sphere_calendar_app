@@ -21,11 +21,13 @@ COPY . .
 RUN pnpm install
 RUN pnpm prisma generate --schema=./packages/database/prisma/schema.prisma
 RUN pnpm --filter database build
+ENV NODE_ENV=production
 RUN pnpm --filter web... build
 
 # Stage runner: minimalistyczny obraz produkcyjny
 FROM base AS runner
 WORKDIR /app
+ENV NODE_ENV=production
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/apps/web ./apps/web
 COPY --from=builder /app/packages ./packages

@@ -9,15 +9,7 @@ import { Button } from '@/components/ui/button';
 import { mutate } from 'swr';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-
-interface CalendarEvent {
-  id: string;
-  summary?: string;
-  description?: string;
-  htmlLink?: string;
-  start?: { dateTime?: string; date?: string };
-  end?: { dateTime?: string; date?: string };
-}
+import type { CalendarEvent } from '@/lib/types/events';
 
 interface EventPopoverProps {
   event: CalendarEvent;
@@ -51,8 +43,10 @@ export function EventPopover({ event }: EventPopoverProps) {
       });
       mutate('http://localhost:3001/calendar/events');
       setOpen(false);
-    } catch (error: any) {
-      toast.error('Błąd usuwania', { description: error.message });
+    } catch (error: unknown) {
+      toast.error('Błąd usuwania', {
+        description: error instanceof Error ? error.message : 'Nie udało się usunąć wydarzenia.',
+      });
     } finally {
       setDeleting(false);
     }

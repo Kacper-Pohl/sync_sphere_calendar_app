@@ -16,6 +16,8 @@ import { Plus } from 'lucide-react';
 import { mutate } from 'swr';
 import { toast } from 'sonner';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+
 export function AddEventModal({ onEventAdded }: { onEventAdded: () => void }) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -41,7 +43,7 @@ export function AddEventModal({ onEventAdded }: { onEventAdded: () => void }) {
     const end = `${date}T${endTime}:00`;
 
     try {
-      const response = await fetch('http://localhost:3001/calendar/events', {
+      const response = await fetch(`${API_URL}/calendar/events`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -62,12 +64,12 @@ export function AddEventModal({ onEventAdded }: { onEventAdded: () => void }) {
         description: `"${summary}" zostało dodane do Twojego Kalendarza Google.`,
       });
 
-      mutate('http://localhost:3001/calendar/events');
+      mutate(`${API_URL}/calendar/events`);
       onEventAdded();
       handleOpenChange(false);
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error('Błąd dodawania', {
-        description: error.message || 'Nie udało się dodać wydarzenia.',
+        description: error instanceof Error ? error.message : 'Nie udało się dodać wydarzenia.',
       });
     } finally {
       setLoading(false);
