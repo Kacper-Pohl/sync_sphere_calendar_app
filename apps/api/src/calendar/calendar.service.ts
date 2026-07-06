@@ -4,15 +4,16 @@ import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class CalendarService {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
   private async getOAuthClient(userId: string) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (!user || !user.accessToken) throw new Error('No user or access token found');
+    if (!user || !user.accessToken)
+      throw new Error('No user or access token found');
 
     const oauth2Client = new google.auth.OAuth2(
       process.env.GOOGLE_CLIENT_ID,
-      process.env.GOOGLE_CLIENT_SECRET
+      process.env.GOOGLE_CLIENT_SECRET,
     );
     oauth2Client.setCredentials({
       access_token: user.accessToken,
@@ -25,7 +26,9 @@ export class CalendarService {
           where: { id: userId },
           data: { accessToken: tokens.access_token },
         });
-        console.log(`[CalendarService] Access token refreshed for user ${userId}`);
+        console.log(
+          `[CalendarService] Access token refreshed for user ${userId}`,
+        );
       }
     });
 
@@ -46,12 +49,20 @@ export class CalendarService {
       });
       return res.data.items;
     } catch (e: any) {
-      console.error('[CalendarService] getEvents error:', e?.response?.data ?? e?.message);
-      throw new Error(`Failed to fetch calendar events: ${e?.response?.data?.error_description ?? e?.message}`);
+      console.error(
+        '[CalendarService] getEvents error:',
+        e?.response?.data ?? e?.message,
+      );
+      throw new Error(
+        `Failed to fetch calendar events: ${e?.response?.data?.error_description ?? e?.message}`,
+      );
     }
   }
 
-  async createEvent(userId: string, data: { summary: string; description?: string; start: string; end: string }) {
+  async createEvent(
+    userId: string,
+    data: { summary: string; description?: string; start: string; end: string },
+  ) {
     const auth = await this.getOAuthClient(userId);
     const calendar = google.calendar({ version: 'v3', auth });
 
@@ -74,8 +85,13 @@ export class CalendarService {
       console.log(`[CalendarService] Event created: ${res.data.htmlLink}`);
       return res.data;
     } catch (e: any) {
-      console.error('[CalendarService] createEvent error:', e?.response?.data ?? e?.message);
-      throw new Error(`Failed to create calendar event: ${e?.response?.data?.error_description ?? e?.message}`);
+      console.error(
+        '[CalendarService] createEvent error:',
+        e?.response?.data ?? e?.message,
+      );
+      throw new Error(
+        `Failed to create calendar event: ${e?.response?.data?.error_description ?? e?.message}`,
+      );
     }
   }
 
@@ -87,8 +103,13 @@ export class CalendarService {
       await calendar.events.delete({ calendarId: 'primary', eventId });
       console.log(`[CalendarService] Event deleted: ${eventId}`);
     } catch (e: any) {
-      console.error('[CalendarService] deleteEvent error:', e?.response?.data ?? e?.message);
-      throw new Error(`Failed to delete event: ${e?.response?.data?.error_description ?? e?.message}`);
+      console.error(
+        '[CalendarService] deleteEvent error:',
+        e?.response?.data ?? e?.message,
+      );
+      throw new Error(
+        `Failed to delete event: ${e?.response?.data?.error_description ?? e?.message}`,
+      );
     }
   }
 }

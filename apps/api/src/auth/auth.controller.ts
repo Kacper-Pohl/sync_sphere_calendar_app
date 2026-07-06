@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { AuthService } from './auth.service';
 import { GoogleOAuthGuard } from './guards/google-oauth.guard';
 import * as express from 'express';
-import { RequestWithUser } from '../common/types';
+import type { RequestWithUser } from '../common/types';
 
 @Controller('auth')
 export class AuthController {

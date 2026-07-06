@@ -1,0 +1,40 @@
+---
+description: Next.js frontend conventions for apps/web
+globs: apps/web/**/*
+alwaysApply: false
+---
+
+# Next.js Frontend Conventions
+
+## Structure
+
+- App Router: pages and layouts in `apps/web/app/`.
+- Shared UI: Shadcn components in `apps/web/components/ui/`.
+- App-specific components: `apps/web/app/components/`.
+- API helpers and types: `apps/web/lib/`.
+
+## Data fetching
+
+- Use SWR (`swr`) for client-side API calls.
+- API base URL from `NEXT_PUBLIC_API_URL` (set to `http://localhost:3001` in Docker).
+- Auth token passed via query param on OAuth redirect; store and attach to requests as established in existing code.
+
+## Styling
+
+- Tailwind CSS with CSS variables defined in `globals.css`.
+- Dark zinc theme with green primary — match existing tokens, do not introduce conflicting color systems.
+- Use `cn()` from `lib/utils.ts` for conditional classes.
+
+## Adding Shadcn components
+
+Run inside the `web` container from `/app`:
+
+```bash
+docker compose exec web sh -c "cd apps/web && pnpm dlx shadcn@latest add <component>"
+```
+
+## Do not
+
+- Use Pages Router patterns (`pages/` directory).
+- Bypass `components/ui/` for standard primitives (Button, Dialog, Input, etc.).
+- Call the API with hardcoded URLs — always use env-based configuration.

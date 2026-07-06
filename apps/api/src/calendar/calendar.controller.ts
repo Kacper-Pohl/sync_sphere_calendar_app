@@ -14,7 +14,7 @@ import type { RequestWithUser } from '../common/types';
 
 @Controller('calendar')
 export class CalendarController {
-  constructor(private readonly calendarService: CalendarService) { }
+  constructor(private readonly calendarService: CalendarService) {}
 
   @Get('events')
   @UseGuards(AuthGuard('jwt'))
