@@ -3,10 +3,13 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { CalendarGrid } from '../../components/CalendarGrid';
+import type { CalendarEvent, EventsResponse } from '@/lib/types/events';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 export default function CalendarPage() {
   const router = useRouter();
-  const [events, setEvents] = useState<any[]>([]);
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -19,7 +22,7 @@ export default function CalendarPage() {
       }
 
       try {
-        const res = await fetch('http://localhost:3001/calendar/events', {
+        const res = await fetch(`${API_URL}/calendar/events`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -27,10 +30,10 @@ export default function CalendarPage() {
 
         if (!res.ok) throw new Error('Nie udało się pobrać wydarzeń kalendarza.');
 
-        const data = await res.json();
+        const data: EventsResponse = await res.json();
         setEvents(data.events || []);
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : 'Nie udało się pobrać wydarzeń kalendarza.');
       } finally {
         setLoading(false);
       }

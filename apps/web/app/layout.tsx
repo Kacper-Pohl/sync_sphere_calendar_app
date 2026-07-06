@@ -1,5 +1,6 @@
 import { Outfit } from 'next/font/google';
 import './globals.css';
+import { Toaster } from '@/components/ui/sonner';
 
 const outfit = Outfit({
   subsets: ['latin'],
@@ -12,8 +13,6 @@ export const metadata = {
   description: 'Zarządzaj wydarzeniami i synchronizuj kalendarz Google w minimalistycznym wydaniu.',
   keywords: ['kalendarz', 'planner', 'google calendar', 'produktywność'],
 };
-
-import { Toaster } from '@/components/ui/sonner';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

@@ -4,7 +4,7 @@ Nowoczesna aplikacja do zarządzania wydarzeniami zintegrowana z kalendarzem Goo
 
 ## Technologia
 
-- **Frontend:** Next.js 15 (App Router), Tailwind CSS v3, Shadcn UI, Lucide React, date-fns
+- **Frontend:** Next.js 16 (App Router), React 19, Tailwind CSS v3, Shadcn UI, Lucide React, date-fns
 - **Backend:** NestJS
 - **Baza Danych:** PostgreSQL, Prisma ORM
 - **Infrastruktura:** Docker, Docker Compose

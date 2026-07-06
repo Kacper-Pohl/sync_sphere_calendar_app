@@ -19,8 +19,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { EventPopover } from './EventPopover';
+import type { CalendarEvent } from '@/lib/types/events';
 
-export function CalendarGrid({ events }: { events: any[] }) {
+export function CalendarGrid({ events }: { events: CalendarEvent[] }) {
   const [currentDate, setCurrentDate] = useState(new Date());
 
   const daysInMonth = eachDayOfInterval({

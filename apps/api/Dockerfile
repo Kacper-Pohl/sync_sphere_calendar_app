@@ -26,6 +26,7 @@ RUN pnpm --filter api... build
 # Stage runner: minimalistyczny obraz produkcyjny
 FROM base AS runner
 WORKDIR /app
+ENV NODE_ENV=production
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/apps/api ./apps/api
 COPY --from=builder /app/packages ./packages
