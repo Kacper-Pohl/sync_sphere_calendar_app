@@ -1,0 +1,42 @@
+---
+description: SyncSphere monorepo architecture, stack, and directory layout
+alwaysApply: true
+---
+
+# Project Overview
+
+**SyncSphere** — calendar and planner app with Google Calendar integration.
+
+## Stack
+
+- **Monorepo:** Turborepo + pnpm workspaces
+- **Frontend:** Next.js 15 (App Router), Tailwind CSS v3, Shadcn UI, SWR, date-fns
+- **Backend:** NestJS 11, Passport (Google OAuth + JWT)
+- **Database:** PostgreSQL 16, Prisma 7 (`packages/database`)
+- **Infra:** Docker Compose (dev), Node 20 Alpine images
+
+## Directory layout
+
+```
+apps/web/          → Next.js frontend (port 3000)
+apps/api/          → NestJS backend (port 3001)
+packages/database/ → Prisma schema, client, migrations
+packages/tsconfig/ → shared TypeScript configs
+```
+
+## URLs (development)
+
+- Frontend: `http://localhost:3000/dashboard`
+- Google OAuth: `http://localhost:3001/auth/google`
+- API base: `http://localhost:3001`
+
+## Environment
+
+- Root `.env` file (not committed) — required for OAuth and secrets.
+- Key vars: `DATABASE_URL`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `JWT_SECRET`, `FRONTEND_URL`.
+- `docker-compose.yml` sets `DATABASE_URL` for containers using hostname `db`.
+
+## UI conventions
+
+- Dark mode theme: zinc palette, bottle-green (`primary`) accents.
+- Reuse Shadcn components from `apps/web/components/ui/`; do not reinvent base UI primitives.

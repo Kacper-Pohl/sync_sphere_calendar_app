@@ -1,0 +1,49 @@
+---
+description: Prisma schema and database conventions for packages/database
+globs: packages/database/**/*
+alwaysApply: false
+---
+
+# Prisma & Database Conventions
+
+## Location
+
+- Schema: `packages/database/prisma/schema.prisma`
+- Config: `packages/database/prisma.config.ts`
+- Shared client export: `packages/database/src/index.ts`
+
+## Schema rules
+
+- Both sides of every relation must be defined with `@relation`.
+- IDs: `@id @default(cuid())` for string IDs.
+- Include `createdAt` / `updatedAt` on models.
+- Add `@@index` on frequently queried fields.
+
+## All Prisma CLI via Docker
+
+Never run Prisma on the host. Always use the `api` container:
+
+```bash
+# Generate client (also runs on api container start)
+docker compose exec api pnpm prisma generate --schema=./packages/database/prisma/schema.prisma
+
+# Create migration
+docker compose exec api pnpm prisma migrate dev --name <name> --schema=./packages/database/prisma/schema.prisma
+
+# Apply migrations (CI/production)
+docker compose exec api pnpm prisma migrate deploy --schema=./packages/database/prisma/schema.prisma
+
+# Open Prisma Studio
+docker compose exec api pnpm prisma studio --schema=./packages/database/prisma/schema.prisma
+```
+
+## Connection
+
+- From containers: `postgresql://devuser:devpassword@db:5432/calendar_db?schema=public`
+- From host tools (e.g. GUI clients): use `localhost:5432` with same credentials.
+
+## After schema changes
+
+1. Create migration via Docker.
+2. Regenerate client (`prisma generate`).
+3. Rebuild `database` package if types are consumed: `docker compose exec api pnpm --filter database build`.

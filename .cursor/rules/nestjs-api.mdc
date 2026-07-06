@@ -1,0 +1,47 @@
+---
+description: NestJS API conventions for apps/api
+globs: apps/api/**/*
+alwaysApply: false
+---
+
+# NestJS API Conventions
+
+## Structure
+
+- Feature modules under `apps/api/src/<feature>/` (module, controller, service).
+- Shared Prisma access via `PrismaModule` / `PrismaService`.
+- Auth: Google OAuth flow in `auth/`, JWT strategy for protected routes.
+- DTOs with `class-validator` for request validation.
+
+## Patterns
+
+```typescript
+// ✅ Inject PrismaService, keep business logic in services
+@Injectable()
+export class CalendarService {
+  constructor(private readonly prisma: PrismaService) {}
+}
+
+// ✅ Use typed request objects from common/types
+@Req() req: RequestWithUser
+```
+
+## Adding endpoints
+
+1. Create or extend a feature module; register in `AppModule`.
+2. Protect routes with JWT guards where user context is required.
+3. Use `ConfigService` for env-based URLs (e.g. `FRONTEND_URL`).
+
+## Testing
+
+Run inside Docker:
+
+```bash
+docker compose exec api pnpm --filter api test
+docker compose exec api pnpm --filter api test:e2e
+```
+
+## Do not
+
+- Add direct `PrismaClient` instantiation outside `PrismaService`.
+- Hardcode `localhost` for inter-service URLs inside containers — use env vars or Docker service names.

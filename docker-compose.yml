@@ -104,7 +104,7 @@ services:
         - action: rebuild
           path: ./apps/web/tailwind.config.ts
         - action: rebuild
-          path: ./apps/web/next.config.ts
+          path: ./apps/web/next.config.mjs
         - action: rebuild
           path: ./package.json
         - action: rebuild

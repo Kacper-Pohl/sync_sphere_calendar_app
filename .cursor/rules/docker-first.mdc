@@ -1,0 +1,69 @@
+---
+description: Run all dev commands inside Docker containers, never on the host
+alwaysApply: true
+---
+
+# Docker-First Development
+
+This project runs entirely in Docker. **Never run `pnpm`, `npm`, `node`, `prisma`, `nest`, or `next` directly on the host** unless the user explicitly asks for a host-only workflow.
+
+## Containers
+
+| Service | Container name | Port | Working dir |
+|---------|----------------|------|-------------|
+| PostgreSQL | `calendar_db` | 5432 | — |
+| NestJS API | `calendar_api` | 3001 | `/app` |
+| Next.js web | `calendar_web` | 3000 | `/app` |
+
+## Command pattern
+
+Run commands from the **repository root** on the host:
+
+```bash
+docker compose exec api <command>      # backend, prisma, monorepo scripts
+docker compose exec web <command>      # frontend scripts
+docker compose exec db <command>       # postgres CLI (psql)
+```
+
+Examples:
+
+```bash
+docker compose exec api pnpm install
+docker compose exec api pnpm prisma generate --schema=./packages/database/prisma/schema.prisma
+docker compose exec api pnpm --filter api test
+docker compose exec web pnpm --filter web lint
+```
+
+## Lifecycle (host)
+
+```bash
+docker compose watch                 # preferred dev mode: start + file watch (foreground)
+docker compose up --watch            # alternative: start with watch in foreground
+docker compose up -d                 # start detached (no compose watch; bind mounts still work)
+docker compose logs -f api           # follow API logs
+docker compose up -d --build api web # rebuild after dependency changes
+docker compose down                  # stop all services
+```
+
+## Docker Compose Watch
+
+`docker-compose.yml` defines `develop.watch` for `api` and `web`. Use watch mode during active development:
+
+| Action | Triggered by | Effect |
+|--------|--------------|--------|
+| `sync` | Source file edits | Copies changed files into the container (no rebuild) |
+| `rebuild` | Dependency/config changes | Rebuilds the service image and restarts the container |
+
+**API** — sync: `apps/api/src`, `packages/` · rebuild: `package.json`, `apps/api/package.json`, `pnpm-lock.yaml`
+
+**Web** — sync: `apps/web/app`, `components`, `lib`, `public` · rebuild: `package.json`, `apps/web/package.json`, `tailwind.config.ts`, `next.config.mjs`, `pnpm-lock.yaml`
+
+NestJS (`nest --watch`) and Next.js (`next dev`) hot-reload inside containers. Polling is enabled (`CHOKIDAR_USEPOLLING`, `WATCHPACK_POLLING`) for reliable file detection on Windows.
+
+## Rules
+
+1. Prefer `docker compose watch` for day-to-day development; use `docker compose up -d` only when watch is not needed.
+2. Use `api` container for Prisma, tests, lint, and any monorepo-wide `pnpm` command.
+3. Use `web` container only for frontend-specific commands when isolation matters; most `pnpm --filter` commands work from `api` too.
+4. Inside containers, `DATABASE_URL` points to host `db` (not `localhost`).
+5. After changing `package.json` or `pnpm-lock.yaml`, watch triggers rebuild automatically; otherwise run `docker compose up -d --build`.
