@@ -1,6 +1,5 @@
 generator client {
   provider = "prisma-client-js"
-  // Emitted into the package tree (bind-mounted in Docker) so the host IDE resolves types.
   output   = "../generated/client"
 }
 

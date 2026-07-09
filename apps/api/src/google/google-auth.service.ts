@@ -2,13 +2,6 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { google } from 'googleapis';
 import { PrismaService } from '../prisma/prisma.service';
 
-/**
- * Builds an authenticated Google OAuth2 client for a given app user and keeps
- * the stored access token in sync when Google silently refreshes it.
- *
- * Shared by any service that needs to call the Google Calendar API on behalf
- * of a user (CalendarService, InvitationsService, ...).
- */
 @Injectable()
 export class GoogleAuthService {
   constructor(private readonly prisma: PrismaService) {}

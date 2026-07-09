@@ -14,9 +14,7 @@ export class AuthController {
 
   @Get('google')
   @UseGuards(GoogleOAuthGuard)
-  async googleAuth() {
-    // Rozpoczyna proces logowania Google
-  }
+  async googleAuth() {}
 
   @Get('google/callback')
   @UseGuards(GoogleOAuthGuard)
