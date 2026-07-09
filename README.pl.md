@@ -10,8 +10,6 @@ Monorepo oparte o **Turborepo** i **pnpm workspaces**, z pełnym środowiskiem d
 
 ## Podgląd (WIP)
 
-Poniższe podglądy są orientacyjne (mockupy oparte na obecnym designie, nie zrzuty na żywo) — interfejs może się zmienić w kolejnych iteracjach.
-
 | Strona główna | Dashboard | Kalendarz |
 | ------------- | --------- | --------- |
 | ![Strona główna](docs/screenshots/landing.png) | ![Dashboard](docs/screenshots/dashboard.png) | ![Kalendarz](docs/screenshots/calendar.png) |
