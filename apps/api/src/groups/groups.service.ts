@@ -28,7 +28,7 @@ export class GroupsService {
         name,
         ownerId: userId,
         members: {
-          create: { userId }, // Właściciel jest automatycznie członkiem
+          create: { userId },
         },
       },
       include: {

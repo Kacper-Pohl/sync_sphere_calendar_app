@@ -1,213 +1,167 @@
-# SyncSphere — Kalendarz i Planner (Monorepo)
+# SyncSphere
 
-Nowoczesna aplikacja do zarządzania wydarzeniami zintegrowana z Google Calendar. Projekt oparty o architekturę **Turborepo** (monorepo) i ekosystem Node.js.
+> **Work in progress (WIP)** — this project is under active development. UI, API, and documentation may change between commits. Do not treat this as a production-ready release.
 
-## Funkcje
+**[Polski](README.pl.md)**
 
-- Logowanie przez **Google OAuth**
-- Synchronizacja wydarzeń z **Google Calendar**
-- **Grupy** — tworzenie zespołów i dodawanie członków
-- **Zaproszenia** — wysyłanie zaproszeń na wydarzenia do członków grupy
-- Dashboard, widok kalendarza i powiadomienia o oczekujących zaproszeniach
+SyncSphere is a modern calendar and planner app with **Google Calendar** integration. It lets you browse events, create meetings, manage team groups, and send invitations to group members.
 
-## Technologia
+Built as a **Turborepo** monorepo with **pnpm workspaces** and a full **Docker Compose** development environment.
 
-| Warstwa | Stack |
-| -------- | ----- |
-| Frontend | Next.js 16 (App Router), React 19, Tailwind CSS v3, Shadcn UI, SWR, date-fns |
-| Backend | NestJS 11, Passport (Google OAuth + JWT) |
-| Baza danych | PostgreSQL 16, Prisma 7 |
-| Infrastruktura | Docker Compose |
-| Monorepo | Turborepo, pnpm workspaces |
+## Preview (WIP)
 
-## Struktura katalogów
+Screenshots below are indicative (mockups based on the current design, not live captures) — the interface may change in future iterations.
+
+| Landing page | Dashboard | Calendar |
+| ------------ | --------- | -------- |
+| ![Landing page](docs/screenshots/landing.png) | ![Dashboard](docs/screenshots/dashboard.png) | ![Calendar](docs/screenshots/calendar.png) |
+
+## Key features
+
+| Feature | Description |
+| ------- | ----------- |
+| **Google OAuth login** | Authentication via Google account with calendar scope |
+| **Event sync** | Fetch upcoming events from Google Calendar (primary calendar) |
+| **Event creation** | Create meetings with optional group member invitations |
+| **Dashboard** | Minimal overview of upcoming events |
+| **Calendar view** | Monthly grid with events and details |
+| **Groups** | Create teams, add members by email, limit of 5 groups per user |
+| **Invitations** | Send, accept, and decline event invitations |
+| **Notifications** | Top bar with pending invitation counter |
+
+## Tech stack
+
+| Layer | Technologies |
+| ----- | ------------ |
+| **Frontend** | Next.js 16 (App Router), React 19, Tailwind CSS v3, Shadcn UI, SWR, date-fns, Framer Motion |
+| **Backend** | NestJS 11, Passport (Google OAuth + JWT), class-validator |
+| **Database** | PostgreSQL 16, Prisma 7 |
+| **Integrations** | Google Calendar API (googleapis) |
+| **Infrastructure** | Docker Compose, Docker Compose Watch |
+| **Monorepo** | Turborepo, pnpm 9, TypeScript 5.9 |
+
+## Architecture
 
 ```
-apps/web/              → frontend Next.js (port 3000)
-apps/api/              → backend NestJS (port 3001)
-packages/database/     → schemat Prisma, klient, migracje
-packages/tsconfig/     → współdzielone konfiguracje TypeScript
-docker-compose.yml     → środowisko deweloperskie
+Browser → web (Next.js :3000) → api (NestJS :3001) → db (PostgreSQL :5432)
+                               ↘ Google Calendar API (OAuth)
 ```
 
-## Wymagania
+## Planned improvements
 
-- **Docker** i **Docker Compose**
-- Plik `.env` w katalogu głównym repozytorium (nie jest commitowany)
+- [ ] **Unit tests** — expand API coverage (currently only NestJS scaffold)
+- [ ] **E2E tests (Playwright)** — login, calendar, and groups flows
+- [ ] **Internationalization (i18n)** — translation keys instead of hardcoded UI strings
+- [ ] **Light mode** — only dark mode is available today (zinc palette + bottle green accents)
+- [ ] **Settings page** — sidebar link exists, view is not implemented yet
+- [ ] **Production deployment** — CI/CD and hosting setup
+- [ ] **And more** — ongoing improvements as the project evolves
 
-## Konfiguracja środowiska
+## Directory layout
 
-Utwórz plik `.env` w katalogu głównym:
-
-```env
-# Baza danych (w kontenerach host to `db`, nie `localhost`)
-DATABASE_URL=postgresql://devuser:devpassword@db:5432/calendar_db?schema=public
-
-# Google OAuth
-GOOGLE_CLIENT_ID=
-GOOGLE_CLIENT_SECRET=
-
-# JWT
-JWT_SECRET=
-
-# URL frontendu (redirect po logowaniu)
-FRONTEND_URL=http://localhost:3000
+```
+apps/web/              → Next.js frontend (port 3000)
+apps/api/              → NestJS backend (port 3001)
+packages/database/     → Prisma schema, client, migrations
+packages/tsconfig/     → shared TypeScript configs
+docker-compose.yml     → development environment
+docs/screenshots/      → UI previews (WIP)
 ```
 
-`docker-compose.yml` nadpisuje `DATABASE_URL` dla kontenerów `api` i `web`. Zmienne OAuth i JWT są wczytywane z `.env` przez `env_file`.
+## Requirements
 
-## Uruchamianie (Docker)
+- **Docker** and **Docker Compose**
+- Google Cloud account with OAuth 2.0 configured
+- `.env` file in the repository root (template: [`.env.example`](.env.example))
 
-Projekt działa **wyłącznie w Dockerze**. Nie uruchamiaj `pnpm`, `prisma`, `nest` ani `next` bezpośrednio na hoście.
+## Quick start
 
-### Start deweloperski (zalecane)
-
-Tryb watch synchronizuje pliki i przebudowuje kontenery po zmianie zależności:
+1. Clone the repository and create `.env` from `.env.example`.
+2. Fill in `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and `JWT_SECRET`.
+3. Start the stack:
 
 ```bash
 docker compose watch
 ```
 
-Alternatywy:
+4. Open [http://localhost:3000](http://localhost:3000) and sign in with Google.
 
-```bash
-docker compose up --watch    # start z watch w tle terminala
-docker compose up -d         # start bez watch (bind mount nadal działa)
+## Environment variables
+
+```env
+DATABASE_URL=postgresql://devuser:devpassword@db:5432/calendar_db?schema=public
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+JWT_SECRET=
+FRONTEND_URL=http://localhost:3000
+NEXT_PUBLIC_API_URL=http://localhost:3001
 ```
 
-### Kontenery
+`docker-compose.yml` overrides `DATABASE_URL` for containers. OAuth and JWT variables are loaded from `.env`.
 
-| Serwis | Kontener | Port | Opis |
-| ------ | -------- | ---- | ---- |
-| `db` | `calendar_db` | 5432 | PostgreSQL |
-| `api` | `calendar_api` | 3001 | NestJS API |
-| `web` | `calendar_web` | 3000 | Next.js frontend |
+## URLs after startup
 
-### Logi
+| Resource | URL |
+| -------- | --- |
+| Frontend | http://localhost:3000 |
+| Dashboard | http://localhost:3000/dashboard |
+| Calendar | http://localhost:3000/dashboard/calendar |
+| Groups | http://localhost:3000/dashboard/groups |
+| Google login | http://localhost:3001/auth/google |
+| API | http://localhost:3001 |
 
-```bash
-docker compose logs -f api
-docker compose logs -f web
-docker compose logs -f db
-```
+## API overview
 
-### Zatrzymanie
+| Endpoint | Description |
+| -------- | ----------- |
+| `GET /auth/google` | Start Google login |
+| `GET /calendar/events` | List events (JWT) |
+| `POST /calendar/events` | Create event, optionally with `groupId` (JWT) |
+| `GET /groups` | List user groups (JWT) |
+| `POST /groups` | Create group (JWT) |
+| `POST /groups/:id/members` | Add member by email (JWT) |
+| `GET /invitations/pending` | Pending invitations (JWT) |
+| `POST /invitations/:id/accept` | Accept invitation (JWT) |
+| `POST /invitations/:id/decline` | Decline invitation (JWT) |
 
-```bash
-docker compose down              # zatrzymaj kontenery
-docker compose down -v           # zatrzymaj + usuń wolumen bazy (utrata danych)
-```
+## Common commands
 
-## Docker Compose Watch
-
-`develop.watch` w `docker-compose.yml` obsługuje hot reload bez ręcznego rebuildu:
-
-| Akcja | Kiedy | Efekt |
-| ----- | ----- | ----- |
-| `sync` | Zmiana plików źródłowych | Kopiuje pliki do kontenera; Nest/Next przeładowują się |
-| `rebuild` | Zmiana `package.json` / `pnpm-lock.yaml` | Przebudowuje obraz i restartuje kontener |
-
-**API** — sync: `apps/api/src`, `packages/` · rebuild: `package.json`, `apps/api/package.json`, `pnpm-lock.yaml`
-
-**Web** — sync: `apps/web/app`, `components`, `lib`, `public` · rebuild: `package.json`, `apps/web/package.json`, `tailwind.config.ts`, `next.config.mjs`, `pnpm-lock.yaml`
-
-Na Windows włączone jest polling (`CHOKIDAR_USEPOLLING`, `WATCHPACK_POLLING`) dla niezawodnego wykrywania zmian.
-
-## Typowe komendy
-
-Wszystkie polecenia uruchamiaj z **katalogu głównego** repozytorium.
-
-### Zależności
+Run all commands from the repository root.
 
 ```bash
-# Instalacja w monorepo (domyślnie z kontenera api)
+# Dependencies
 docker compose exec api pnpm install
 
-# Po zmianie package.json — przebudowa obrazów
-docker compose up -d --build api web
+# Prisma — generate client
+docker compose exec api pnpm prisma generate --schema=./packages/database/prisma/schema.prisma
 
-# Frontend ma osobny wolumen node_modules — po dodaniu paczek web:
-docker compose exec web pnpm install
-```
-
-### Prisma i baza danych
-
-```bash
-# Generowanie klienta Prisma
-docker compose exec api pnpm prisma generate \
-  --schema=./packages/database/prisma/schema.prisma
-
-# Migracja (dev)
-docker compose exec api pnpm prisma migrate dev \
-  --name <nazwa> \
+# Prisma — migration (dev)
+docker compose exec api pnpm prisma migrate dev --name <name> \
   --schema=./packages/database/prisma/schema.prisma \
   --config=./packages/database/prisma.config.ts
 
-# Synchronizacja schematu bez migracji (szybkie dev)
-docker compose exec api pnpm prisma db push \
-  --schema=./packages/database/prisma/schema.prisma \
-  --config=./packages/database/prisma.config.ts
-
-# Shell PostgreSQL
-docker compose exec db psql -U devuser -d calendar_db
-```
-
-### Build, testy, lint
-
-```bash
-docker compose exec api pnpm --filter api run build
-docker compose exec api pnpm run lint
+# Tests and lint
 docker compose exec api pnpm --filter api test
-
+docker compose exec api pnpm run lint
 docker compose exec web pnpm --filter web lint
-docker compose exec web pnpm --filter web build
+
+# Logs
+docker compose logs -f api
 ```
 
-> Uwaga: `docker compose exec api pnpm run build` (bez `--filter`) uruchamia skrypt z korzenia repo (`turbo run build`), który przez Turborepo przebudowuje **wszystkie** pakiety monorepo, w tym `apps/web` — zawsze scope'uj do konkretnego pakietu z `--filter`, żeby uniknąć niepotrzebnego (i wolniejszego) budowania frontendu przy pracy nad samym API.
+> The project runs **entirely in Docker**. Do not run `pnpm`, `prisma`, `nest`, or `next` directly on the host.
 
-### Produkcja (obraz Docker)
+Developer and AI agent instructions: [`AGENTS.md`](./AGENTS.md).
 
-```bash
-docker compose build --no-cache web    # build Next.js (wymaga NODE_ENV=production w Dockerfile)
-docker compose up -d --build api web
-```
+## Troubleshooting
 
-## Dostęp po uruchomieniu
+| Issue | Solution |
+| ----- | -------- |
+| `Module not found` after adding a package | `docker compose exec web pnpm install` or `docker compose up -d --build web` |
+| Missing database tables | `docker compose exec api pnpm prisma db push --schema=./packages/database/prisma/schema.prisma --config=./packages/database/prisma.config.ts` |
+| File changes not visible on Windows | Use `docker compose watch` (polling enabled in compose) |
+| Stale `node_modules` volume | `docker compose down` → remove `*_node_modules` volumes → `docker compose up -d --build` |
 
-| Zasób | URL |
-| ----- | --- |
-| Frontend (dashboard) | http://localhost:3000/dashboard |
-| Grupy | http://localhost:3000/dashboard/groups |
-| Kalendarz | http://localhost:3000/dashboard/calendar |
-| Logowanie Google | http://localhost:3001/auth/google |
-| API | http://localhost:3001 |
-| PostgreSQL | `localhost:5432` (user: `devuser`, db: `calendar_db`) |
+## License
 
-## API (skrót)
-
-| Endpoint | Opis |
-| -------- | ---- |
-| `GET /auth/google` | Rozpoczęcie logowania Google |
-| `GET /calendar/events` | Lista wydarzeń (JWT) |
-| `POST /calendar/events` | Nowe wydarzenie, opcjonalnie z `groupId` (JWT) |
-| `GET /groups` | Lista grup użytkownika (JWT) |
-| `POST /groups` | Utworzenie grupy (JWT) |
-| `POST /groups/:id/members` | Dodanie członka po e-mailu (JWT) |
-| `GET /invitations/pending` | Oczekujące zaproszenia (JWT) |
-
-## Rozwiązywanie problemów
-
-| Problem | Rozwiązanie |
-| ------- | ----------- |
-| `Module not found` po dodaniu paczki | `docker compose exec web pnpm install` lub `docker compose up -d --build web` |
-| Prisma: brak tabel (`Group`, `EventInvitation`) | `docker compose exec api pnpm prisma db push --schema=./packages/database/prisma/schema.prisma --config=./packages/database/prisma.config.ts` |
-| Build web pada na `/_document` | Upewnij się, że nie ma katalogu `apps/web/pages/` (tylko App Router) |
-| Ostrzeżenie `non-standard "NODE_ENV"` przy budowaniu | `apps/web` samo wymusza `NODE_ENV=production` w skrypcie `build` — użyj `docker compose exec api pnpm --filter api run build`, żeby budować tylko API bez kaskadowego budowania frontendu przez Turborepo |
-| Stare `node_modules` w wolumenie | `docker compose down` → usuń wolumeny `calendar_app_*_node_modules` → `docker compose up -d --build` |
-| Zmiany plików nie widać na Windows | Użyj `docker compose watch`; polling jest włączony w compose |
-
-## Uwagi dla programistów
-
-- UI w trybie **dark mode** — paleta zinc + butelkowa zieleń (`primary`). Nowe komponenty bazuj na Shadcn UI z `apps/web/components/ui/`.
-- Autoryzacja JWT jest obsługiwana centralnie przez `AuthProvider` w layoucie dashboardu — zapytania SWR czekają na gotową sesję.
-- Szczegółowe instrukcje dla agentów AI: [`AGENTS.md`](./AGENTS.md).
+This project is licensed under the [MIT License](LICENSE).

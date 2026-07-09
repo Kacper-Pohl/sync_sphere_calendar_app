@@ -20,6 +20,7 @@ pnpm-debug.log*
 # Prywatne zmienne środowiskowe z kluczami (BEZWZGLĘDNIE OMIJANE!)
 .env
 .env.*
+!.env.example
 *.env
 
 # Baza danych (Prisma cache i pliki tymczasowe)
