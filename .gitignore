@@ -12,6 +12,7 @@ pnpm-debug.log*
 **/build/
 **/dist/
 **/.swc/
+*.tsbuildinfo
 
 # Pamięć podręczna Turborepo
 **/.turbo/
@@ -32,6 +33,13 @@ pnpm-debug.log*
 skills/
 skills-lock.json
 
+# Osobiste reguły Cursor (tylko lokalnie)
+.cursor/rules/teaching-mode.mdc
+.cursor/settings.json
+
+# Notatki nauki / przewodniki (tylko lokalnie)
+docs/learning/
+
 # Pliki środowisk zintegrowanych IDE (WebStorm, VS Code)
 .idea/
 .vscode/
@@ -41,3 +49,4 @@ skills-lock.json
 # Śmieci systemowe macOS/Windows
 .DS_Store
 Thumbs.db
+Z_NAUKA_README/

@@ -7,6 +7,7 @@ export class GoogleOAuthGuard extends AuthGuard('google') {
     super({
       accessType: 'offline',
       prompt: 'consent',
+      scope: ['email', 'profile', 'https://www.googleapis.com/auth/calendar'],
     });
   }
 

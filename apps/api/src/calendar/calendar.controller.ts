@@ -13,11 +13,11 @@ import { CalendarService } from './calendar.service';
 import type { RequestWithUser } from '../common/types';
 
 @Controller('calendar')
+@UseGuards(AuthGuard('jwt'))
 export class CalendarController {
   constructor(private readonly calendarService: CalendarService) {}
 
   @Get('events')
-  @UseGuards(AuthGuard('jwt'))
   async getEvents(@Req() req: RequestWithUser) {
     const userId = req.user.id;
     const events = await this.calendarService.getEvents(userId);
@@ -25,11 +25,16 @@ export class CalendarController {
   }
 
   @Post('events')
-  @UseGuards(AuthGuard('jwt'))
   async createEvent(
     @Req() req: RequestWithUser,
     @Body()
-    body: { summary: string; description?: string; start: string; end: string },
+    body: {
+      summary: string;
+      description?: string;
+      start: string;
+      end: string;
+      groupId?: string;
+    },
   ) {
     const userId = req.user.id;
     const event = await this.calendarService.createEvent(userId, body);
@@ -37,7 +42,6 @@ export class CalendarController {
   }
 
   @Delete('events/:eventId')
-  @UseGuards(AuthGuard('jwt'))
   async deleteEvent(
     @Req() req: RequestWithUser,
     @Param('eventId') eventId: string,
