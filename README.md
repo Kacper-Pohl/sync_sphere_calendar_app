@@ -10,8 +10,6 @@ Built as a **Turborepo** monorepo with **pnpm workspaces** and a full **Docker C
 
 ## Preview (WIP)
 
-Screenshots below are indicative (mockups based on the current design, not live captures) — the interface may change in future iterations.
-
 | Landing page | Dashboard | Calendar |
 | ------------ | --------- | -------- |
 | ![Landing page](docs/screenshots/landing.png) | ![Dashboard](docs/screenshots/dashboard.png) | ![Calendar](docs/screenshots/calendar.png) |
