@@ -11,6 +11,8 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import type { CalendarEvent } from '@/lib/types/events';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+
 interface EventPopoverProps {
   event: CalendarEvent;
 }
@@ -26,7 +28,7 @@ export function EventPopover({ event }: EventPopoverProps) {
   const handleDelete = async () => {
     setDeleting(true);
     try {
-      const response = await fetch(`http://localhost:3001/calendar/events/${event.id}`, {
+      const response = await fetch(`${API_URL}/calendar/events/${event.id}`, {
         method: 'DELETE',
         headers: {
           Authorization: `Bearer ${localStorage.getItem('jwt_token')}`,
@@ -41,7 +43,7 @@ export function EventPopover({ event }: EventPopoverProps) {
       toast.success('Wydarzenie usunięte', {
         description: `"${event.summary}" zostało usunięte z Kalendarza Google.`,
       });
-      mutate('http://localhost:3001/calendar/events');
+      mutate(`${API_URL}/calendar/events`);
       setOpen(false);
     } catch (error: unknown) {
       toast.error('Błąd usuwania', {
@@ -56,6 +58,7 @@ export function EventPopover({ event }: EventPopoverProps) {
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <div
+          data-testid={`event-trigger-${event.id}`}
           className={cn(
             'cursor-pointer truncate rounded-md px-2 py-1 text-xs',
             'bg-violet-500/20 font-medium text-violet-300',
@@ -73,7 +76,10 @@ export function EventPopover({ event }: EventPopoverProps) {
 
       <PopoverContent className="w-72 overflow-hidden p-0" align="start" side="right">
         <div className="border-b border-violet-500/20 bg-violet-600/30 p-4">
-          <h3 className="text-base font-semibold leading-tight text-foreground">
+          <h3
+            data-testid="event-popover-title"
+            className="text-base font-semibold leading-tight text-foreground"
+          >
             {event.summary || 'Bez tytułu'}
           </h3>
         </div>
@@ -112,7 +118,13 @@ export function EventPopover({ event }: EventPopoverProps) {
 
         <div className="flex items-center gap-2 px-4 pb-4">
           {event.htmlLink && (
-            <Button variant="outline" size="sm" className="flex-1 gap-1.5 text-xs" asChild>
+            <Button
+              data-testid="event-google-link"
+              variant="outline"
+              size="sm"
+              className="flex-1 gap-1.5 text-xs"
+              asChild
+            >
               <a href={event.htmlLink} target="_blank" rel="noopener noreferrer">
                 <ExternalLink className="h-3 w-3" />
                 Otwórz w Google
@@ -120,6 +132,7 @@ export function EventPopover({ event }: EventPopoverProps) {
             </Button>
           )}
           <Button
+            data-testid="event-delete"
             variant="destructive"
             size="sm"
             className="gap-1.5 text-xs"

@@ -35,19 +35,36 @@ export function CalendarGrid({ events }: { events: CalendarEvent[] }) {
   const weekDays = ['Pon', 'Wto', 'Śro', 'Czw', 'Pią', 'Sob', 'Nie'];
 
   return (
-    <Card className="flex h-full flex-col overflow-hidden border-border/40 bg-card/60 shadow-xl backdrop-blur">
+    <Card
+      data-testid="calendar-grid"
+      className="flex h-full flex-col overflow-hidden border-border/40 bg-card/60 shadow-xl backdrop-blur"
+    >
       <div className="flex items-center justify-between border-b border-border/40 p-6">
         <h2 className="text-2xl font-bold capitalize text-foreground">
           {format(currentDate, 'LLLL yyyy', { locale: pl })}
         </h2>
         <div className="flex space-x-2">
-          <Button variant="outline" size="icon" onClick={prevMonth}>
+          <Button
+            data-testid="calendar-prev-month"
+            variant="outline"
+            size="icon"
+            onClick={prevMonth}
+          >
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <Button variant="outline" onClick={() => setCurrentDate(new Date())}>
+          <Button
+            data-testid="calendar-today"
+            variant="outline"
+            onClick={() => setCurrentDate(new Date())}
+          >
             Dzisiaj
           </Button>
-          <Button variant="outline" size="icon" onClick={nextMonth}>
+          <Button
+            data-testid="calendar-next-month"
+            variant="outline"
+            size="icon"
+            onClick={nextMonth}
+          >
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
@@ -76,6 +93,7 @@ export function CalendarGrid({ events }: { events: CalendarEvent[] }) {
             return (
               <div
                 key={idx}
+                data-testid={`calendar-day-${format(day, 'yyyy-MM-dd')}`}
                 className={cn(
                   'flex min-h-[120px] flex-col border-b border-r border-border/40 p-2 transition-colors',
                   !isCurrentMonth && 'bg-muted/10 opacity-60',

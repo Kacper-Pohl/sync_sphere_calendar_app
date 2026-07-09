@@ -54,11 +54,11 @@ docker compose down                  # stop all services
 | `sync` | Source file edits | Copies changed files into the container (no rebuild) |
 | `rebuild` | Dependency/config changes | Rebuilds the service image and restarts the container |
 
-**API** — sync: `apps/api/src`, `packages/` · rebuild: `package.json`, `apps/api/package.json`, `pnpm-lock.yaml`
+**API** — sync: `apps/api/` (ignores `node_modules/`, `dist/`), `packages/` · rebuild: `package.json`, `apps/api/package.json`, `pnpm-lock.yaml`
 
-**Web** — sync: `apps/web/app`, `components`, `lib`, `public` · rebuild: `package.json`, `apps/web/package.json`, `tailwind.config.ts`, `next.config.mjs`, `pnpm-lock.yaml`
+**Web** — sync: `apps/web/` (ignores `node_modules/`, `.next/`) · rebuild: `package.json`, `apps/web/package.json`, `tailwind.config.ts`, `next.config.mjs`, `pnpm-lock.yaml`
 
-NestJS (`nest --watch`) and Next.js (`next dev`) hot-reload inside containers. Polling is enabled (`CHOKIDAR_USEPOLLING`, `WATCHPACK_POLLING`) for reliable file detection on Windows.
+NestJS (`nest --watch`) and Next.js (`next dev`) hot-reload inside containers. Polling is enabled (`CHOKIDAR_USEPOLLING`, `CHOKIDAR_INTERVAL=300`, `WATCHPACK_POLLING`) for reliable file detection on Windows. Use `docker compose watch` (not plain `up -d`) so `develop.watch` sync rules are active.
 
 ## Rules
 

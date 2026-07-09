@@ -1,35 +1,27 @@
 'use client';
 
-import { useEffect, useMemo, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import useSWR from 'swr';
+import { useMemo } from 'react';
 import { Clock } from 'lucide-react';
-import { fetcher } from '@/lib/fetcher';
+import { format } from 'date-fns';
+import { pl } from 'date-fns/locale';
+import { useAuthenticatedSWR } from '@/lib/use-authenticated-swr';
 import { EventsResponse, CalendarEvent } from '@/lib/types/events';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
-function DashboardContent() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const urlToken = searchParams.get('token');
-
-  useEffect(() => {
-    if (urlToken) {
-      localStorage.setItem('jwt_token', urlToken);
-      router.replace('/dashboard');
-    }
-  }, [urlToken, router]);
-
-  const { data, error, isLoading } = useSWR<EventsResponse>(`${API_URL}/calendar/events`, fetcher, {
-    revalidateOnFocus: true,
-    dedupingInterval: 5000,
-  });
+export default function DashboardPage() {
+  const { data, showError, isPageLoading } = useAuthenticatedSWR<EventsResponse>(
+    `${API_URL}/calendar/events`,
+    {
+      revalidateOnFocus: true,
+      dedupingInterval: 5000,
+    },
+  );
 
   const events = useMemo(() => data?.events || [], [data]);
 
-  if (isLoading)
+  if (isPageLoading)
     return (
       <div className="flex h-screen flex-col items-center justify-center space-y-4">
         <div className="h-8 w-8 animate-spin rounded-full border-t-2 border-emerald-500"></div>
@@ -39,23 +31,17 @@ function DashboardContent() {
       </div>
     );
 
-  if (error)
+  if (showError)
     return (
       <div className="flex h-screen flex-col items-center justify-center p-6 text-center">
         <p className="text-sm font-medium text-slate-300">
           Nie udało się połączyć z orbitą danych.
         </p>
-        <button
-          onClick={() => router.push('/')}
-          className="mt-6 rounded-full border border-white/10 px-4 py-2 text-xs transition-colors hover:bg-white/5"
-        >
-          Powrót
-        </button>
       </div>
     );
 
   return (
-    <div className="mx-auto max-w-7xl px-6 py-12 md:py-20">
+    <div data-testid="dashboard-summary-page" className="mx-auto max-w-7xl px-6 py-12 md:py-20">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -72,6 +58,7 @@ function DashboardContent() {
         <AnimatePresence mode="popLayout">
           {events.length === 0 ? (
             <motion.p
+              data-testid="dashboard-empty-state"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               className="col-span-full font-light italic text-slate-500"
@@ -79,8 +66,14 @@ function DashboardContent() {
               Cisza w kalendarzu. Ciesz się wolną chwilą.
             </motion.p>
           ) : (
-            events.map((event: CalendarEvent, index: number) => (
+            events.map((event: CalendarEvent, index: number) => {
+              const startDate = new Date(
+                event.start?.dateTime || event.start?.date || '',
+              );
+
+              return (
               <motion.div
+                data-testid={`dashboard-event-card-${event.id}`}
                 key={event.id}
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -90,9 +83,12 @@ function DashboardContent() {
               >
                 <div className="mb-4">
                   <div className="mb-1 text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-500">
-                    Sierpień
+                    {format(startDate, 'LLLL', { locale: pl })}
                   </div>
-                  <h3 className="text-lg font-semibold text-slate-100 transition-colors group-hover:text-white">
+                  <h3
+                    data-testid="dashboard-event-title"
+                    className="text-lg font-semibold text-slate-100 transition-colors group-hover:text-white"
+                  >
                     {event.summary || 'Bez Tytułu'}
                   </h3>
                 </div>
@@ -100,14 +96,11 @@ function DashboardContent() {
                 <div className="flex items-center gap-2 text-xs text-slate-400">
                   <Clock className="h-3 w-3" />
                   <span>
-                    {new Date(event.start?.dateTime || event.start?.date || '').toLocaleString(
-                      'pl-PL',
-                      {
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      },
-                    )}
+                    {startDate.toLocaleString('pl-PL', {
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
                   </span>
                 </div>
 
@@ -119,24 +112,11 @@ function DashboardContent() {
                   </div>
                 )}
               </motion.div>
-            ))
+              );
+            })
           )}
         </AnimatePresence>
       </div>
     </div>
-  );
-}
-
-export default function DashboardPage() {
-  return (
-    <Suspense
-      fallback={
-        <div className="flex h-screen items-center justify-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-t-2 border-slate-700"></div>
-        </div>
-      }
-    >
-      <DashboardContent />
-    </Suspense>
   );
 }

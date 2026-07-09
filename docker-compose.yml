@@ -33,6 +33,7 @@ services:
       - DATABASE_URL=postgresql://devuser:devpassword@db:5432/calendar_db?schema=public
       - NODE_ENV=development
       - CHOKIDAR_USEPOLLING=true
+      - CHOKIDAR_INTERVAL=300
       - WATCHPACK_POLLING=true
     env_file:
       - .env
@@ -43,14 +44,19 @@ services:
     restart: unless-stopped
     develop:
       watch:
-        # Synchronizuj kod źródłowy API bez przebudowywania kontenera
+        # Synchronizuj cały moduł API (łapie też pliki poza src/, np. nest-cli.json)
         - action: sync
-          path: ./apps/api/src
-          target: /app/apps/api/src
+          path: ./apps/api
+          target: /app/apps/api
+          ignore:
+            - node_modules/
+            - dist/
         # Synchronizuj paczki współdzielone
         - action: sync
           path: ./packages
           target: /app/packages
+          ignore:
+            - node_modules/
         # Przebuduj kontener gdy zmienią się zależności
         - action: rebuild
           path: ./apps/api/package.json
@@ -75,6 +81,7 @@ services:
       - NEXT_PUBLIC_API_URL=http://localhost:3001
       - NODE_ENV=development
       - CHOKIDAR_USEPOLLING=true
+      - CHOKIDAR_INTERVAL=300
       - WATCHPACK_POLLING=true
     env_file:
       - .env
@@ -85,19 +92,13 @@ services:
     restart: unless-stopped
     develop:
       watch:
-        # Synchronizuj kod źródłowy Next.js bez przebudowywania kontenera
+        # Synchronizuj cały moduł web (łapie też next-env.d.ts, middleware itd.)
         - action: sync
-          path: ./apps/web/app
-          target: /app/apps/web/app
-        - action: sync
-          path: ./apps/web/components
-          target: /app/apps/web/components
-        - action: sync
-          path: ./apps/web/lib
-          target: /app/apps/web/lib
-        - action: sync
-          path: ./apps/web/public
-          target: /app/apps/web/public
+          path: ./apps/web
+          target: /app/apps/web
+          ignore:
+            - node_modules/
+            - .next/
         # Przebuduj gdy zmienią się zależności lub konfiguracja
         - action: rebuild
           path: ./apps/web/package.json
