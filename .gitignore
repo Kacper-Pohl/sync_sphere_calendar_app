@@ -17,6 +17,13 @@ pnpm-debug.log*
 # Pamięć podręczna Turborepo
 **/.turbo/
 
+# Artefakty testów (Vitest, Playwright)
+**/coverage/
+**/playwright-report/
+**/blob-report/
+**/test-results/
+**/.playwright/
+
 # Prywatne zmienne środowiskowe z kluczami (BEZWZGLĘDNIE OMIJANE!)
 .env
 .env.*

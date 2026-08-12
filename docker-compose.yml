@@ -89,6 +89,12 @@ services:
     depends_on:
       api:
         condition: service_started
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:3000 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 90s
     restart: unless-stopped
     develop:
       watch:
@@ -111,9 +117,27 @@ services:
         - action: rebuild
           path: ./pnpm-lock.yaml
 
+  e2e:
+    profiles: ["test"]
+    build:
+      context: .
+      dockerfile: apps/e2e/Dockerfile
+    working_dir: /app
+    volumes:
+      - .:/app
+      - e2e_node_modules:/app/node_modules
+      - e2e_app_node_modules:/app/apps/e2e/node_modules
+    environment:
+      - PLAYWRIGHT_BASE_URL=http://web:3000
+    depends_on:
+      web:
+        condition: service_healthy
+
 volumes:
   pgdata:
   api_node_modules:
   api_app_node_modules:
   web_node_modules:
   web_app_node_modules:
+  e2e_node_modules:
+  e2e_app_node_modules:
