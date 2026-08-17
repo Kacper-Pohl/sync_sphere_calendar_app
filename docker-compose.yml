@@ -1,3 +1,25 @@
+# Shared development image for deps/api/web. The same `image` name makes Compose
+# build it once instead of separately for every service.
+x-dev-image: &dev-image
+  image: sync_sphere_dev:local
+  build:
+    context: .
+    dockerfile: docker/dev.Dockerfile
+  # Without this, everything the container writes to the bind mount — node_modules,
+  # .next, dist, the generated Prisma client — ends up owned by root and cannot be
+  # touched from the host without sudo. 1000:1000 is the first user on Linux and
+  # also the `node` user in the base image.
+  user: "1000:1000"
+
+# Bind mount only, no volumes for node_modules. Dependencies land directly on the
+# host filesystem, so the IDE indexes them without a dev container. This only
+# works if the working copy sits on Linux — see AGENTS.md.
+x-dev-volumes: &dev-volumes
+  - .:/app
+  # pnpm store on the same filesystem as node_modules (hardlinks), but outside the
+  # project tree so the IDE does not index it.
+  - ${HOME}/.pnpm-store:/pnpm-store
+
 services:
   db:
     image: postgres:16-alpine
@@ -17,127 +39,97 @@ services:
       retries: 5
     restart: unless-stopped
 
+  # One-shot service that prepares the workspace. api, web and e2e wait for it to
+  # complete successfully, so the install and the `database` build happen exactly
+  # once, before anything else starts.
+  deps:
+    <<: *dev-image
+    container_name: calendar_deps
+    working_dir: /app
+    volumes: *dev-volumes
+    env_file:
+      - .env
+    command: >
+      sh -c "pnpm install &&
+      pnpm prisma generate --schema=./packages/database/prisma/schema.prisma &&
+      pnpm --filter database build"
+    restart: "no"
+
   api:
-    build:
-      context: .
-      dockerfile: apps/api/Dockerfile
+    <<: *dev-image
     container_name: calendar_api
     working_dir: /app
     ports:
       - "3001:3001"
-    volumes:
-      - .:/app
-      - api_node_modules:/app/node_modules
-      - api_app_node_modules:/app/apps/api/node_modules
+    volumes: *dev-volumes
     environment:
       - DATABASE_URL=postgresql://devuser:devpassword@db:5432/calendar_db?schema=public
       - NODE_ENV=development
-      - CHOKIDAR_USEPOLLING=true
-      - CHOKIDAR_INTERVAL=300
-      - WATCHPACK_POLLING=true
     env_file:
       - .env
-    command: sh -c "pnpm prisma generate --schema=./packages/database/prisma/schema.prisma && pnpm run dev --filter api"
+    command: pnpm run dev --filter api
     depends_on:
       db:
         condition: service_healthy
+      deps:
+        condition: service_completed_successfully
     restart: unless-stopped
-    develop:
-      watch:
-        # Synchronizuj cały moduł API (łapie też pliki poza src/, np. nest-cli.json)
-        - action: sync
-          path: ./apps/api
-          target: /app/apps/api
-          ignore:
-            - node_modules/
-            - dist/
-        # Synchronizuj paczki współdzielone
-        - action: sync
-          path: ./packages
-          target: /app/packages
-          ignore:
-            - node_modules/
-        # Przebuduj kontener gdy zmienią się zależności
-        - action: rebuild
-          path: ./apps/api/package.json
-        - action: rebuild
-          path: ./package.json
-        - action: rebuild
-          path: ./pnpm-lock.yaml
 
   web:
-    build:
-      context: .
-      dockerfile: apps/web/Dockerfile
+    <<: *dev-image
     container_name: calendar_web
     working_dir: /app
     ports:
       - "3000:3000"
-    volumes:
-      - .:/app
-      - web_node_modules:/app/node_modules
-      - web_app_node_modules:/app/apps/web/node_modules
+    volumes: *dev-volumes
     environment:
       - NEXT_PUBLIC_API_URL=http://localhost:3001
       - NODE_ENV=development
-      - CHOKIDAR_USEPOLLING=true
-      - CHOKIDAR_INTERVAL=300
-      - WATCHPACK_POLLING=true
     env_file:
       - .env
     command: pnpm run dev --filter web
     depends_on:
       api:
         condition: service_started
+      deps:
+        condition: service_completed_successfully
     healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider http://localhost:3000 || exit 1"]
+      # Via node, because the bookworm-slim image has neither wget nor curl.
+      # 127.0.0.1 rather than localhost: `next dev -H 0.0.0.0` listens on IPv4 only,
+      # and localhost can resolve to ::1.
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000').then(r => process.exit(r.ok ? 0 : 1), () => process.exit(1))",
+        ]
       interval: 10s
       timeout: 5s
       retries: 12
       start_period: 90s
     restart: unless-stopped
-    develop:
-      watch:
-        # Synchronizuj cały moduł web (łapie też next-env.d.ts, middleware itd.)
-        - action: sync
-          path: ./apps/web
-          target: /app/apps/web
-          ignore:
-            - node_modules/
-            - .next/
-        # Przebuduj gdy zmienią się zależności lub konfiguracja
-        - action: rebuild
-          path: ./apps/web/package.json
-        - action: rebuild
-          path: ./apps/web/tailwind.config.ts
-        - action: rebuild
-          path: ./apps/web/next.config.mjs
-        - action: rebuild
-          path: ./package.json
-        - action: rebuild
-          path: ./pnpm-lock.yaml
 
+  # The Playwright image is glibc-based, same as the dev image, so e2e reuses the
+  # same node_modules as everything else — no separate install, no separate
+  # volumes. Browsers come from the base image.
   e2e:
     profiles: ["test"]
     build:
       context: .
       dockerfile: apps/e2e/Dockerfile
+    # uid 1000 in the Playwright image is `pwuser`.
+    user: "1000:1000"
     working_dir: /app
-    volumes:
-      - .:/app
-      - e2e_node_modules:/app/node_modules
-      - e2e_app_node_modules:/app/apps/e2e/node_modules
+    volumes: *dev-volumes
     environment:
       - PLAYWRIGHT_BASE_URL=http://web:3000
+    command: pnpm --filter e2e test
     depends_on:
       web:
         condition: service_healthy
+      deps:
+        condition: service_completed_successfully
 
 volumes:
   pgdata:
-  api_node_modules:
-  api_app_node_modules:
-  web_node_modules:
-  web_app_node_modules:
-  e2e_node_modules:
-  e2e_app_node_modules:
