@@ -1,11 +1,12 @@
 import { expect, test } from '@playwright/test';
 
+// Block every third-party request so the suite never depends on the network.
 test.beforeEach(async ({ page }) => {
   await page.route(/^https?:\/\/(?!web:3000|localhost:3000)/, (route) => route.abort());
 });
 
 test.describe('smoke', () => {
-  test('landing page renderuje się i prowadzi do logowania Google', async ({ page }) => {
+  test('landing page renders and links to Google sign-in', async ({ page }) => {
     await page.goto('/');
 
     await expect(page.getByRole('heading', { name: 'SyncSphere' })).toBeVisible();
@@ -15,7 +16,7 @@ test.describe('smoke', () => {
     await expect(loginLink).toHaveAttribute('href', /\/auth\/google$/);
   });
 
-  test('nieznana ścieżka zwraca stronę 404', async ({ page }) => {
+  test('unknown path returns the 404 page', async ({ page }) => {
     const response = await page.goto('/nie-ma-takiej-strony');
 
     expect(response?.status()).toBe(404);
