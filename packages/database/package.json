@@ -24,6 +24,7 @@
   "devDependencies": {
     "prisma": "^7.8.0",
     "@types/pg": "^8.11.10",
+    "tsconfig": "workspace:*",
     "typescript": "^5.9.3"
   }
 }

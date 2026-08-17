@@ -2,11 +2,11 @@ import { IsEmail, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class OAuthProfileDto {
   @IsEmail()
-  email: string;
+  email!: string;
 
   @IsString()
   @IsNotEmpty()
-  googleId: string;
+  googleId!: string;
 
   @IsString()
   @IsOptional()
@@ -18,7 +18,7 @@ export class OAuthProfileDto {
 
   @IsString()
   @IsNotEmpty()
-  accessToken: string;
+  accessToken!: string;
 
   @IsString()
   @IsOptional()
@@ -26,5 +26,5 @@ export class OAuthProfileDto {
 }
 
 export class LoginResponseDto {
-  token: string;
+  token!: string;
 }
