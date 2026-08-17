@@ -7,7 +7,7 @@
 # Deliberately does NOT install dependencies at image build time — the one-shot
 # `deps` service does that on every start, so the contents of node_modules always
 # match the current pnpm-lock.yaml.
-FROM node:20-bookworm-slim
+FROM node:22-bookworm-slim
 
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
