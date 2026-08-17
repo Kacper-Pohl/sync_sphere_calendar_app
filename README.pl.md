@@ -35,7 +35,7 @@ Monorepo oparte o **Turborepo** i **pnpm workspaces**, z pełnym środowiskiem d
 | **Backend** | NestJS 11, Passport (Google OAuth + JWT), class-validator |
 | **Baza danych** | PostgreSQL 16, Prisma 7 |
 | **Integracje** | Google Calendar API (googleapis) |
-| **Infrastruktura** | Docker Compose, Docker Compose Watch |
+| **Infrastruktura** | Docker Compose |
 | **Monorepo** | Turborepo, pnpm 9, TypeScript 5.9 |
 
 ## Architektura
@@ -47,8 +47,8 @@ Przeglądarka → web (Next.js :3000) → api (NestJS :3001) → db (PostgreSQL 
 
 ## Planowane ulepszenia
 
-- [ ] **Testy jednostkowe** — rozszerzenie pokrycia w API (obecnie tylko szkielet NestJS)
-- [ ] **Testy E2E (Playwright)** — scenariusze logowania, kalendarza i grup
+- [ ] **Pokrycie testami API** — `apps/api` ma na razie tylko szkieletowy spec NestJS (`apps/web` ma już testy Vitest)
+- [ ] **Scenariusze E2E po zalogowaniu** — Playwright jest wdrożony, ale pokrycie kończy się na stronach bez logowania; Google OAuth nie da się zautomatyzować, więc kalendarz i grupy wymagają strategii wstrzykiwania JWT
 - [ ] **Internacjonalizacja (i18n)** — kody tłumaczeń zamiast hardcodowanych stringów w UI
 - [ ] **Tryb jasny (light mode)** — obecnie dostępny jest wyłącznie dark mode (paleta zinc + butelkowa zieleń)
 - [ ] **Strona ustawień** — link w sidebarze istnieje, widok w przygotowaniu
@@ -60,8 +60,10 @@ Przeglądarka → web (Next.js :3000) → api (NestJS :3001) → db (PostgreSQL 
 ```
 apps/web/              → frontend Next.js (port 3000)
 apps/api/              → backend NestJS (port 3001)
+apps/e2e/              → testy end-to-end (Playwright)
 packages/database/     → schemat Prisma, klient, migracje
 packages/tsconfig/     → współdzielone konfiguracje TypeScript
+docker/dev.Dockerfile  → wspólny obraz deweloperski (deps, api, web)
 docker-compose.yml     → środowisko deweloperskie
 docs/screenshots/      → podglądy UI (WIP)
 ```
@@ -79,10 +81,13 @@ docs/screenshots/      → podglądy UI (WIP)
 3. Uruchom stack:
 
 ```bash
-docker compose watch
+docker compose up -d
 ```
 
 4. Otwórz [http://localhost:3000](http://localhost:3000) i zaloguj się przez Google.
+
+Ta jedna komenda to cały workflow, również po zmianie zależności — jednorazowy
+serwis `deps` przy każdym `up` przeinstalowuje je i przebudowuje.
 
 ## Konfiguracja środowiska
 
@@ -115,9 +120,13 @@ NEXT_PUBLIC_API_URL=http://localhost:3001
 | `GET /auth/google` | Rozpoczęcie logowania Google |
 | `GET /calendar/events` | Lista wydarzeń (JWT) |
 | `POST /calendar/events` | Nowe wydarzenie, opcjonalnie z `groupId` (JWT) |
+| `DELETE /calendar/events/:eventId` | Usunięcie wydarzenia (JWT) |
 | `GET /groups` | Lista grup użytkownika (JWT) |
 | `POST /groups` | Utworzenie grupy (JWT) |
 | `POST /groups/:id/members` | Dodanie członka po e-mailu (JWT) |
+| `DELETE /groups/:id/members/:memberId` | Usunięcie członka (JWT) |
+| `DELETE /groups/:id/leave` | Opuszczenie grupy (JWT) |
+| `DELETE /groups/:id` | Usunięcie grupy (JWT) |
 | `GET /invitations/pending` | Oczekujące zaproszenia (JWT) |
 | `POST /invitations/:id/accept` | Akceptacja zaproszenia (JWT) |
 | `POST /invitations/:id/decline` | Odrzucenie zaproszenia (JWT) |
@@ -127,8 +136,8 @@ NEXT_PUBLIC_API_URL=http://localhost:3001
 Wszystkie polecenia uruchamiaj z katalogu głównego repozytorium.
 
 ```bash
-# Zależności
-docker compose exec api pnpm install
+# Instalacja zależności, regeneracja Prismy i przebudowa `database` (naraz)
+docker compose run --rm deps
 
 # Prisma — generowanie klienta
 docker compose exec api pnpm prisma generate --schema=./packages/database/prisma/schema.prisma
@@ -138,14 +147,26 @@ docker compose exec api pnpm prisma migrate dev --name <nazwa> \
   --schema=./packages/database/prisma/schema.prisma \
   --config=./packages/database/prisma.config.ts
 
-# Testy i lint
-docker compose exec api pnpm --filter api test
+# Lint
 docker compose exec api pnpm run lint
 docker compose exec web pnpm --filter web lint
 
 # Logi
 docker compose logs -f api
 ```
+
+## Testy
+
+Trzy warstwy, każda uruchamiana w kontenerze:
+
+| Warstwa | Lokalizacja | Runner | Komenda |
+| ------- | ----------- | ------ | ------- |
+| Backend, jednostkowe | `apps/api/` | Jest | `docker compose exec api pnpm --filter api test` |
+| Frontend, jednostkowe | `apps/web/` | Vitest | `docker compose exec web pnpm --filter web test` |
+| End-to-end | `apps/e2e/` | Playwright | `docker compose --profile test run --rm e2e` |
+
+Serwis `e2e` jest za profilem Compose `test`, więc zwykłe `docker compose up`
+nigdy go nie uruchamia.
 
 > Projekt działa **wyłącznie w Dockerze**. Nie uruchamiaj `pnpm`, `prisma`, `nest` ani `next` bezpośrednio na hoście.
 
@@ -155,10 +176,10 @@ Szczegółowe instrukcje dla deweloperów i agentów AI: [`AGENTS.md`](./AGENTS.
 
 | Problem | Rozwiązanie |
 | ------- | ----------- |
-| `Module not found` po dodaniu paczki | `docker compose exec web pnpm install` lub `docker compose up -d --build web` |
+| `Module not found` po dodaniu paczki | `docker compose up -d` — ponownie uruchamia instalację w `deps` |
 | Brak tabel w bazie | `docker compose exec api pnpm prisma db push --schema=./packages/database/prisma/schema.prisma --config=./packages/database/prisma.config.ts` |
-| Zmiany plików niewidoczne na Windows | Użyj `docker compose watch` (polling włączony w compose) |
-| Stare `node_modules` w wolumenie | `docker compose down` → usuń wolumeny `*_node_modules` → `docker compose up -d --build` |
+| Zmiany w plikach nie wywołują przebudowy | Na Windowsie sklonuj repozytorium wewnątrz WSL2, a nie na `C:\` — szczegóły w [`AGENTS.md`](./AGENTS.md) |
+| `node_modules` wyglądają na uszkodzone | `docker compose run --rm deps` przeinstaluje. Nie uruchamiaj `pnpm install` na hoście — nadpisze drzewo binariami zbudowanymi pod host. |
 
 ## Licencja
 

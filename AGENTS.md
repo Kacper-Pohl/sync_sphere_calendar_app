@@ -148,18 +148,20 @@ Three separate layers, each run inside a container:
 Notes:
 
 - Unit test files live next to the code they test (`*.spec.ts` in `apps/api`, `*.test.ts(x)` in `apps/web`).
-- The `e2e` service sits behind the `test` Compose profile, so `docker compose up`/`watch` never starts it. It waits for `web` to report healthy, then runs Playwright against `http://web:3000`.
+- The `e2e` service sits behind the `test` Compose profile, so `docker compose up` never starts it. It waits for `web` to report healthy, then runs Playwright against `http://web:3000`.
 - The Playwright image tag in `apps/e2e/Dockerfile` must match the `@playwright/test` version in `apps/e2e/package.json`.
-- `e2e` keeps its own `node_modules` volumes. Its base image is glibc (Ubuntu),
-  while `deps`/`api`/`web` are musl (Alpine) — native binaries are not interchangeable.
+- `e2e` shares the same bind-mounted `node_modules` as `deps`/`api`/`web`; it has
+  no volumes of its own. Both base images are glibc — `node:20-bookworm-slim` for
+  the dev image, Ubuntu for the Playwright image — so the native binaries are
+  interchangeable. (The Alpine images under `apps/*/Dockerfile` are production
+  builds and play no part in the dev stack.)
 - E2E coverage is limited to unauthenticated pages. Google OAuth cannot be automated; testing `/dashboard` needs a JWT/`storageState` seeding strategy that does not exist yet.
 
-## Cursor rules & skills
+## Cursor rules
 
-Detailed guidance lives in:
-
-- `.cursor/rules/` — always-on and file-scoped conventions
-- `.cursor/skills/` — workflow skills (`docker-workflow`, `calendar-app-development`)
+Detailed guidance lives in `.cursor/rules/` — always-on and file-scoped
+conventions (`docker-first`, `project-overview`, `nestjs-api`,
+`nextjs-frontend`, `prisma-database`).
 
 ## Stack
 
