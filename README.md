@@ -35,7 +35,7 @@ Built as a **Turborepo** monorepo with **pnpm workspaces** and a full **Docker C
 | **Backend** | NestJS 11, Passport (Google OAuth + JWT), class-validator |
 | **Database** | PostgreSQL 16, Prisma 7 |
 | **Integrations** | Google Calendar API (googleapis) |
-| **Infrastructure** | Docker Compose, Docker Compose Watch |
+| **Infrastructure** | Docker Compose |
 | **Monorepo** | Turborepo, pnpm 9, TypeScript 5.9 |
 
 ## Architecture
@@ -47,8 +47,8 @@ Browser → web (Next.js :3000) → api (NestJS :3001) → db (PostgreSQL :5432)
 
 ## Planned improvements
 
-- [ ] **Unit tests** — expand API coverage (currently only NestJS scaffold)
-- [ ] **E2E tests (Playwright)** — login, calendar, and groups flows
+- [ ] **API test coverage** — `apps/api` still has only the NestJS scaffold spec (`apps/web` already has Vitest tests)
+- [ ] **Authenticated E2E flows** — Playwright is in place, but coverage stops at unauthenticated pages; Google OAuth cannot be automated, so calendar and groups flows need a JWT seeding strategy
 - [ ] **Internationalization (i18n)** — translation keys instead of hardcoded UI strings
 - [ ] **Light mode** — only dark mode is available today (zinc palette + bottle green accents)
 - [ ] **Settings page** — sidebar link exists, view is not implemented yet
@@ -60,8 +60,10 @@ Browser → web (Next.js :3000) → api (NestJS :3001) → db (PostgreSQL :5432)
 ```
 apps/web/              → Next.js frontend (port 3000)
 apps/api/              → NestJS backend (port 3001)
+apps/e2e/              → Playwright end-to-end tests
 packages/database/     → Prisma schema, client, migrations
 packages/tsconfig/     → shared TypeScript configs
+docker/dev.Dockerfile  → shared dev image (deps, api, web)
 docker-compose.yml     → development environment
 docs/screenshots/      → UI previews (WIP)
 ```
@@ -79,10 +81,13 @@ docs/screenshots/      → UI previews (WIP)
 3. Start the stack:
 
 ```bash
-docker compose watch
+docker compose up -d
 ```
 
 4. Open [http://localhost:3000](http://localhost:3000) and sign in with Google.
+
+That single command is the whole workflow, including after changing
+dependencies — a one-shot `deps` service reinstalls and rebuilds on every `up`.
 
 ## Environment variables
 
@@ -115,9 +120,13 @@ NEXT_PUBLIC_API_URL=http://localhost:3001
 | `GET /auth/google` | Start Google login |
 | `GET /calendar/events` | List events (JWT) |
 | `POST /calendar/events` | Create event, optionally with `groupId` (JWT) |
+| `DELETE /calendar/events/:eventId` | Delete event (JWT) |
 | `GET /groups` | List user groups (JWT) |
 | `POST /groups` | Create group (JWT) |
 | `POST /groups/:id/members` | Add member by email (JWT) |
+| `DELETE /groups/:id/members/:memberId` | Remove member (JWT) |
+| `DELETE /groups/:id/leave` | Leave group (JWT) |
+| `DELETE /groups/:id` | Delete group (JWT) |
 | `GET /invitations/pending` | Pending invitations (JWT) |
 | `POST /invitations/:id/accept` | Accept invitation (JWT) |
 | `POST /invitations/:id/decline` | Decline invitation (JWT) |
@@ -127,8 +136,8 @@ NEXT_PUBLIC_API_URL=http://localhost:3001
 Run all commands from the repository root.
 
 ```bash
-# Dependencies
-docker compose exec api pnpm install
+# Install dependencies, regenerate Prisma and rebuild `database` (all at once)
+docker compose run --rm deps
 
 # Prisma — generate client
 docker compose exec api pnpm prisma generate --schema=./packages/database/prisma/schema.prisma
@@ -138,14 +147,26 @@ docker compose exec api pnpm prisma migrate dev --name <name> \
   --schema=./packages/database/prisma/schema.prisma \
   --config=./packages/database/prisma.config.ts
 
-# Tests and lint
-docker compose exec api pnpm --filter api test
+# Lint
 docker compose exec api pnpm run lint
 docker compose exec web pnpm --filter web lint
 
 # Logs
 docker compose logs -f api
 ```
+
+## Tests
+
+Three layers, each run inside a container:
+
+| Layer | Location | Runner | Command |
+| ----- | -------- | ------ | ------- |
+| Backend unit | `apps/api/` | Jest | `docker compose exec api pnpm --filter api test` |
+| Frontend unit | `apps/web/` | Vitest | `docker compose exec web pnpm --filter web test` |
+| End-to-end | `apps/e2e/` | Playwright | `docker compose --profile test run --rm e2e` |
+
+The `e2e` service sits behind the `test` Compose profile, so a normal
+`docker compose up` never starts it.
 
 > The project runs **entirely in Docker**. Do not run `pnpm`, `prisma`, `nest`, or `next` directly on the host.
 
@@ -155,10 +176,10 @@ Developer and AI agent instructions: [`AGENTS.md`](./AGENTS.md).
 
 | Issue | Solution |
 | ----- | -------- |
-| `Module not found` after adding a package | `docker compose exec web pnpm install` or `docker compose up -d --build web` |
+| `Module not found` after adding a package | `docker compose up -d` — this re-runs the `deps` install |
 | Missing database tables | `docker compose exec api pnpm prisma db push --schema=./packages/database/prisma/schema.prisma --config=./packages/database/prisma.config.ts` |
-| File changes not visible on Windows | Use `docker compose watch` (polling enabled in compose) |
-| Stale `node_modules` volume | `docker compose down` → remove `*_node_modules` volumes → `docker compose up -d --build` |
+| Edits do not trigger a rebuild | On Windows, clone the repository inside WSL2 rather than on `C:\` — see [`AGENTS.md`](./AGENTS.md) |
+| `node_modules` look stale or broken | `docker compose run --rm deps` to reinstall. Do not run `pnpm install` on the host: it would overwrite the tree with host-built binaries. |
 
 ## License
 
