@@ -9,13 +9,13 @@ function jsonResponse(body: unknown): Response {
 }
 
 describe('getApiErrorMessage', () => {
-  it('zwraca message gdy jest stringiem', async () => {
+  it('returns the message when it is a string', async () => {
     const res = jsonResponse({ message: 'Brak dostępu' });
 
     await expect(getApiErrorMessage(res, 'fallback')).resolves.toBe('Brak dostępu');
   });
 
-  it('skleja tablicę message przecinkiem', async () => {
+  it('joins an array of messages with commas', async () => {
     const res = jsonResponse({ message: ['title jest wymagany', 'startAt jest wymagany'] });
 
     await expect(getApiErrorMessage(res, 'fallback')).resolves.toBe(
@@ -23,13 +23,13 @@ describe('getApiErrorMessage', () => {
     );
   });
 
-  it('zwraca fallback gdy body nie jest poprawnym JSON-em', async () => {
+  it('falls back when the body is not valid JSON', async () => {
     const res = new Response('<html>502 Bad Gateway</html>');
 
     await expect(getApiErrorMessage(res, 'Coś poszło nie tak')).resolves.toBe('Coś poszło nie tak');
   });
 
-  it('zwraca fallback gdy JSON nie zawiera message', async () => {
+  it('falls back when the JSON carries no message', async () => {
     const res = jsonResponse({ statusCode: 500 });
 
     await expect(getApiErrorMessage(res, 'Coś poszło nie tak')).resolves.toBe('Coś poszło nie tak');

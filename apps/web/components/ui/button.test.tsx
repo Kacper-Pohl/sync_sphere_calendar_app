@@ -5,30 +5,30 @@ import { describe, expect, it, vi } from 'vitest';
 import { Button } from './button';
 
 describe('Button', () => {
-  it('renderuje element button z podanym tekstem', () => {
-    render(<Button>Zapisz</Button>);
+  it('renders a button element with the given label', () => {
+    render(<Button>Save</Button>);
 
-    expect(screen.getByRole('button', { name: 'Zapisz' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Save' })).toBeInTheDocument();
   });
 
-  it('wywołuje onClick po kliknięciu', async () => {
+  it('calls onClick when clicked', async () => {
     const onClick = vi.fn();
-    render(<Button onClick={onClick}>Zapisz</Button>);
+    render(<Button onClick={onClick}>Save</Button>);
 
-    await userEvent.click(screen.getByRole('button', { name: 'Zapisz' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
 
     expect(onClick).toHaveBeenCalledTimes(1);
   });
 
-  it('nie wywołuje onClick gdy jest disabled', async () => {
+  it('does not call onClick when disabled', async () => {
     const onClick = vi.fn();
     render(
       <Button disabled onClick={onClick}>
-        Zapisz
+        Save
       </Button>,
     );
 
-    await userEvent.click(screen.getByRole('button', { name: 'Zapisz' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
 
     expect(onClick).not.toHaveBeenCalled();
   });

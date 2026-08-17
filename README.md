@@ -1,14 +1,12 @@
 # SyncSphere
 
-> **Work in progress (WIP)** — this project is under active development. UI, API, and documentation may change between commits. Do not treat this as a production-ready release.
-
 **[Polski](README.pl.md)**
 
 SyncSphere is a modern calendar and planner app with **Google Calendar** integration. It lets you browse events, create meetings, manage team groups, and send invitations to group members.
 
 Built as a **Turborepo** monorepo with **pnpm workspaces** and a full **Docker Compose** development environment.
 
-## Preview (WIP)
+## Preview
 
 | Landing page | Dashboard | Calendar |
 | ------------ | --------- | -------- |
@@ -45,9 +43,16 @@ Browser → web (Next.js :3000) → api (NestJS :3001) → db (PostgreSQL :5432)
                                ↘ Google Calendar API (OAuth)
 ```
 
+## Project status
+
+Actively developed side project. Everything under **Key features** works end to
+end and is covered by the test suites described below; interfaces may still
+change between commits, so treat this as a working prototype rather than a
+tagged release.
+
 ## Planned improvements
 
-- [ ] **API test coverage** — `apps/api` still has only the NestJS scaffold spec (`apps/web` already has Vitest tests)
+- [ ] **Wider API coverage** — the services are tested; controllers and the Google Calendar integration are not yet
 - [ ] **Authenticated E2E flows** — Playwright is in place, but coverage stops at unauthenticated pages; Google OAuth cannot be automated, so calendar and groups flows need a JWT seeding strategy
 - [ ] **Internationalization (i18n)** — translation keys instead of hardcoded UI strings
 - [ ] **Light mode** — only dark mode is available today (zinc palette + bottle green accents)
@@ -65,7 +70,7 @@ packages/database/     → Prisma schema, client, migrations
 packages/tsconfig/     → shared TypeScript configs
 docker/dev.Dockerfile  → shared dev image (deps, api, web)
 docker-compose.yml     → development environment
-docs/screenshots/      → UI previews (WIP)
+docs/screenshots/      → UI previews
 ```
 
 ## Requirements
@@ -167,6 +172,22 @@ Three layers, each run inside a container:
 
 The `e2e` service sits behind the `test` Compose profile, so a normal
 `docker compose up` never starts it.
+
+What is covered:
+
+- **Backend** — the authorization rules in `GroupsService` and
+  `InvitationsService`: ownership checks on every mutation, the five-group
+  ownership limit, refusing to let an owner leave their own group, and rejecting
+  an invitation that was already answered.
+- **Frontend** — the `cn` class merger, the API error formatter, and the SWR
+  fetcher (bearer token attachment and error propagation), plus a `Button`
+  interaction test.
+- **End-to-end** — the landing page and the 404 page, with all third-party
+  requests blocked so the suite never depends on the network.
+
+Authenticated flows are not covered end to end: Google OAuth cannot be
+automated, so reaching `/dashboard` needs a JWT seeding strategy that does not
+exist yet.
 
 > The project runs **entirely in Docker**. Do not run `pnpm`, `prisma`, `nest`, or `next` directly on the host.
 

@@ -1,14 +1,12 @@
 # SyncSphere
 
-> **Work in progress (WIP)** — projekt jest aktywnie rozwijany. UI, API i dokumentacja mogą się zmieniać między commitami. Nie traktuj tego jako wersji produkcyjnej.
-
 **[English](README.md)**
 
 SyncSphere to nowoczesna aplikacja kalendarza i planera z integracją **Google Calendar**. Umożliwia przeglądanie wydarzeń, tworzenie spotkań, zarządzanie grupami zespołowymi i wysyłanie zaproszeń do członków grupy.
 
 Monorepo oparte o **Turborepo** i **pnpm workspaces**, z pełnym środowiskiem deweloperskim w **Docker Compose**.
 
-## Podgląd (WIP)
+## Podgląd
 
 | Strona główna | Dashboard | Kalendarz |
 | ------------- | --------- | --------- |
@@ -45,9 +43,16 @@ Przeglądarka → web (Next.js :3000) → api (NestJS :3001) → db (PostgreSQL 
                                     ↘ Google Calendar API (OAuth)
 ```
 
+## Status projektu
+
+Aktywnie rozwijany projekt poboczny. Wszystko z sekcji **Główne funkcje**
+działa end to end i jest pokryte testami opisanymi niżej; interfejsy mogą się
+jeszcze zmieniać między commitami, więc traktuj to jako działający prototyp,
+a nie otagowane wydanie.
+
 ## Planowane ulepszenia
 
-- [ ] **Pokrycie testami API** — `apps/api` ma na razie tylko szkieletowy spec NestJS (`apps/web` ma już testy Vitest)
+- [ ] **Szersze pokrycie API** — serwisy są przetestowane; kontrolery i integracja z Google Calendar jeszcze nie
 - [ ] **Scenariusze E2E po zalogowaniu** — Playwright jest wdrożony, ale pokrycie kończy się na stronach bez logowania; Google OAuth nie da się zautomatyzować, więc kalendarz i grupy wymagają strategii wstrzykiwania JWT
 - [ ] **Internacjonalizacja (i18n)** — kody tłumaczeń zamiast hardcodowanych stringów w UI
 - [ ] **Tryb jasny (light mode)** — obecnie dostępny jest wyłącznie dark mode (paleta zinc + butelkowa zieleń)
@@ -65,7 +70,7 @@ packages/database/     → schemat Prisma, klient, migracje
 packages/tsconfig/     → współdzielone konfiguracje TypeScript
 docker/dev.Dockerfile  → wspólny obraz deweloperski (deps, api, web)
 docker-compose.yml     → środowisko deweloperskie
-docs/screenshots/      → podglądy UI (WIP)
+docs/screenshots/      → podglądy UI
 ```
 
 ## Wymagania
@@ -167,6 +172,21 @@ Trzy warstwy, każda uruchamiana w kontenerze:
 
 Serwis `e2e` jest za profilem Compose `test`, więc zwykłe `docker compose up`
 nigdy go nie uruchamia.
+
+Co jest pokryte:
+
+- **Backend** — reguły autoryzacji w `GroupsService` i `InvitationsService`:
+  sprawdzanie własności przy każdej mutacji, limit 5 posiadanych grup, zakaz
+  opuszczenia własnej grupy przez właściciela i odrzucanie zaproszenia, na które
+  już odpowiedziano.
+- **Frontend** — funkcja `cn`, formatter błędów API oraz fetcher SWR (doklejanie
+  tokenu i propagacja błędu), plus test interakcji z komponentem `Button`.
+- **End-to-end** — strona główna i strona 404, z zablokowanymi wszystkimi
+  żądaniami do zewnętrznych hostów, żeby zestaw nie zależał od sieci.
+
+Scenariusze po zalogowaniu nie są pokryte end to end: Google OAuth nie da się
+zautomatyzować, więc dotarcie do `/dashboard` wymaga strategii wstrzykiwania
+JWT, której jeszcze nie ma.
 
 > Projekt działa **wyłącznie w Dockerze**. Nie uruchamiaj `pnpm`, `prisma`, `nest` ani `next` bezpośrednio na hoście.
 
